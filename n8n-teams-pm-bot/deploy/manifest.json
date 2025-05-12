@@ -2,7 +2,7 @@
   "$schema": "https://developer.microsoft.com/en-us/json-schemas/teams/v1.6/MicrosoftTeams.schema.json",
   "manifestVersion": "1.6",
   "version": "1.0",
-  "id": "01d00d4b-a2de-42a4-a652-06ca2ed2bd3f",
+  "id": "ec40bbb0-909e-4b46-908f-ce9b37735e5f",
   "packageName": "com.valantic.n8n-teams-pm-bot",
   "developer": {
     "name": "Patrick Schönfeld",
@@ -24,7 +24,7 @@
   },
   "bots": [
     {
-      "botId": "val-n8n-teams-pm-bot-id",
+      "botId": "ec40bbb0-909e-4b46-908f-ce9b37735e5f",
       "scopes": ["personal", "team"],
       "supportsFiles": false,
       "isNotificationOnly": false
