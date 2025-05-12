@@ -10,13 +10,17 @@
         "watch": "nodemon ./index.js",
         "lint": "eslint .",
         "test": "echo \"Error: no test specified\" && exit 1",
-        "deploy": "ngrok http 3978"
+        "deploy": "ngrok http 3978",
+        "validate": "teamsapp validate --teams-manifest-file deploy/manifest.json"
     },
     "repository": {
         "type": "git",
         "url": "https://github.com"
     },
     "dependencies": {
+        "@microsoft/teamsapp-cli": "^3.1.0",
+        "@microsoft/teamsfx": "^3.0.2",
+        "@microsoft/teamsfx-cli": "^2.1.2",
         "axios": "^1.9.0",
         "botbuilder": "~4.22.1",
         "dotenv": "~8.2.0",

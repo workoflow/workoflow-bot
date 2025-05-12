@@ -1,3 +1,5 @@
+https://learn.microsoft.com/de-de/microsoftteams/platform/toolkit/teams-toolkit-cli?pivots=version-three#teamsapp-validate
+
 # n8n-teams-pm-bot
 
 first agent, valantic n8n teams integration
