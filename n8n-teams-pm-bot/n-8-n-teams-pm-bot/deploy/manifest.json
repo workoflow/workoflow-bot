@@ -1,0 +1,35 @@
+{
+  "$schema": "https://developer.microsoft.com/en-us/json-schemas/teams/v1.6/MicrosoftTeams.schema.json",
+  "manifestVersion": "1.6",
+  "version": "1.0",
+  "id": "01d00d4b-a2de-42a4-a652-06ca2ed2bd3f",
+  "packageName": "com.valantic.n8n-teams-pm-bot",
+  "developer": {
+    "name": "Patrick Schönfeld",
+    "websiteUrl": "https://www.valantic.com/de/cx/",
+    "privacyUrl": "https://www.valantic.com/de/datenschutzerklaerung",
+    "termsOfUseUrl": "https://www.valantic.com/de/impressum-und-rechtshinweise"
+  },
+  "name": {
+    "short": "Valantic PM Bot",
+    "full": "Valantic PM Bot"
+  },
+  "description": {
+    "short": "Its a bot with access to valantic internal tools.",
+    "full": "Its a bot with access to valantic internal tools."
+  },
+  "icons": {
+    "color": "color-icon.png",
+    "outline": "outline-icon.png"
+  },
+  "bots": [
+    {
+      "botId": "val-n8n-teams-pm-bot-id",
+      "scopes": ["personal", "team"],
+      "supportsFiles": false,
+      "isNotificationOnly": false
+    }
+  ],
+  "permissions": ["identity", "messageTeamMembers"],
+  "validDomains": ["workflows.vcec.cloud"]
+}

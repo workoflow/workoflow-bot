@@ -1,0 +1,35 @@
+{
+    "name": "n8n-teams-pm-bot",
+    "version": "1.0.0",
+    "description": "first agent, valantic n8n teams integration",
+    "author": "Generated using Microsoft Bot Builder Yeoman generator v4.22.1",
+    "license": "MIT",
+    "main": "index.js",
+    "scripts": {
+        "start": "node ./index.js",
+        "watch": "nodemon ./index.js",
+        "lint": "eslint .",
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "deploy": "ngrok http 3978"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com"
+    },
+    "dependencies": {
+        "axios": "^1.9.0",
+        "botbuilder": "~4.22.1",
+        "dotenv": "~8.2.0",
+        "ngrok": "^5.0.0-beta.2",
+        "restify": "~11.1.0"
+    },
+    "devDependencies": {
+        "eslint": "^7.0.0",
+        "eslint-config-standard": "^14.1.1",
+        "eslint-plugin-import": "^2.20.2",
+        "eslint-plugin-node": "^11.1.0",
+        "eslint-plugin-promise": "^4.2.1",
+        "eslint-plugin-standard": "^4.0.1",
+        "nodemon": "^2.0.4"
+    }
+}
