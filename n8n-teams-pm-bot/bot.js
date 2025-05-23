@@ -1,7 +1,9 @@
 const { ActivityHandler, MessageFactory } = require('botbuilder');
 const axios = require('axios'); // Import axios
 
-const N8N_WEBHOOK_URL = 'https://workflows.vcec.cloud/webhook/016d8b95-d5a5-4ac6-acb5-359a547f642f'; // Replace with your actual n8n webhook URL
+const N8N_WEBHOOK_URL = process.env.N8N_WEBHOOK_URL || 'https://workflows.vcec.cloud/webhook/016d8b95-d5a5-4ac6-acb5-359a547f642f'; // Replace with your actual n8n webhook URL
+
+console.log('N8N_WEBHOOK_URL:', N8N_WEBHOOK_URL);
 
 class EchoBot extends ActivityHandler {
     constructor() {
