@@ -1,63 +1,47 @@
-https://learn.microsoft.com/de-de/microsoftteams/platform/toolkit/teams-toolkit-cli?pivots=version-three#teamsapp-validate
+![Workoflow Bot Logo](assets/logo-192.png)
 
-# n8n-teams-pm-bot
+# Workoflow Bot
 
-first agent, valantic n8n teams integration
-
-This bot has been created using [Bot Framework](https://dev.botframework.com), it shows how to create a simple bot that accepts input from the user and echoes it back.
+This is a simple Bot connecting n8n to Teams built using the Microsoft Bot Framework SDK v4 for Node.js. It's designed to demonstrate the basic setup and functionality of a bot, including receiving messages and sending responses.
 
 ## Prerequisites
 
-- [Node.js](https://nodejs.org) version 10.14.1 or higher
+Before you begin, ensure you have the following installed:
 
-    ```bash
-    # determine node version
-    node --version
-    ```
+*   Node.js (LTS version recommended)
+*   npm (comes with Node.js)
+*   Bot Framework Emulator
+*   Git (for cloning the repository)
 
-## To run the bot
+## Getting Started
 
-- Install modules
+Follow these steps to get your bot up and running locally.
 
-    ```bash
-    npm install
-    ```
+### 1. Clone the Repository
 
-- Start the bot
+### 2. Install Dependencies
 
-    ```bash
-    npm start
-    ```
-
-## Testing the bot using Bot Framework Emulator
-
-[Bot Framework Emulator](https://github.com/microsoft/botframework-emulator) is a desktop application that allows bot developers to test and debug their bots on localhost or running remotely through a tunnel.
-
-- Install the Bot Framework Emulator version 4.9.0 or greater from [here](https://github.com/Microsoft/BotFramework-Emulator/releases)
-
-### Connect to the bot using Bot Framework Emulator
-
-- Launch Bot Framework Emulator
-- File -> Open Bot
-- Enter a Bot URL of `http://localhost:3978/api/messages`
-
-## Deploy the bot to Azure
-
-To learn more about deploying a bot to Azure, see [Deploy your bot to Azure](https://aka.ms/azuredeployment) for a complete list of deployment instructions.
+Install the necessary npm packages:
 
 
-## Further reading
+### 3. Configure Environment Variables
 
-- [Bot Framework Documentation](https://docs.botframework.com)
-- [Bot Basics](https://docs.microsoft.com/azure/bot-service/bot-builder-basics?view=azure-bot-service-4.0)
-- [Dialogs](https://docs.microsoft.com/en-us/azure/bot-service/bot-builder-concept-dialog?view=azure-bot-service-4.0)
-- [Gathering Input Using Prompts](https://docs.microsoft.com/en-us/azure/bot-service/bot-builder-prompts?view=azure-bot-service-4.0)
-- [Activity processing](https://docs.microsoft.com/en-us/azure/bot-service/bot-builder-concept-activity-processing?view=azure-bot-service-4.0)
-- [Azure Bot Service Introduction](https://docs.microsoft.com/azure/bot-service/bot-service-overview-introduction?view=azure-bot-service-4.0)
-- [Azure Bot Service Documentation](https://docs.microsoft.com/azure/bot-service/?view=azure-bot-service-4.0)
-- [Azure CLI](https://docs.microsoft.com/cli/azure/?view=azure-cli-latest)
-- [Azure Portal](https://portal.azure.com)
-- [Language Understanding using LUIS](https://docs.microsoft.com/en-us/azure/cognitive-services/luis/)
-- [Channels and Bot Connector Service](https://docs.microsoft.com/en-us/azure/bot-service/bot-concepts?view=azure-bot-service-4.0)
-- [Restify](https://www.npmjs.com/package/restify)
-- [dotenv](https://www.npmjs.com/package/dotenv)
+Create a `.env` file in the root of the project directory (e.g., `workoflow-bot/.env`).
+
+*   `MicrosoftAppId` and `MicrosoftAppPassword`: Your bot's App ID and Password from the Azure Bot registration. Leave blank if you are not securing your bot or for initial local testing without authentication.
+*   `MicrosoftAppType`: Type of Microsoft App. Common values are `UserAssignedMSI`, `MultiTenant`.
+*   `MicrosoftAppTenantId`: The tenant ID for your Microsoft App.
+*   `WORKOFLOW_PORT`: The port on which the bot server will listen. Defaults to `3978` if not specified.
+*   `WORKOFLOW_N8N_WEBHOOK_URL`: The url of your n8n webhook.
+
+### 4. Run the Bot
+
+ - npm run watch (or npm run start)
+
+### Testing with Bot Framework Emulator
+1.Launch the Bot Framework Emulator.
+2.Connect to the bot:•Click on "Open Bot".
+    For "Bot URL", enter http://localhost:3978/api/messages (or replace 3978 with the port you configured in WORKOFLOW_PORT in your .env file).
+    If you configured MicrosoftAppId and MicrosoftAppPassword in your .env file, enter them into the Emulator's connection dialog. Otherwise, you can leave them blank for local testing if your bot doesn't strictly require them for local emulation.
+    Click "Connect". 
+3.Send a message: Once connected, type a message in the chat window and send it. The bot should echo your message back to you.
