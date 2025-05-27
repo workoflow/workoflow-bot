@@ -4,7 +4,8 @@
 
 # Workoflow Bot
 
-This is a simple Bot connecting n8n to Teams built using the Microsoft Bot Framework SDK v4 for Node.js. It's designed to demonstrate the basic setup and functionality of a bot, including receiving messages and sending responses.
+This is a simple Bot connecting n8n to Teams built using the Microsoft Bot Framework SDK v4 for Node.js. It's designed to orchestrate company internal tools and data combined with modern agent and AI functionalities.
+Due to a data privacy first approach this bot uses self hosted services to store its data. https://github.com/patrickjaja/workoflow-hosting
 
 ## Prerequisites
 
