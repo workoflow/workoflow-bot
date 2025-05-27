@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/logo-192.png" alt="Workoflow Bot Logo" width="192">
+  <img src="assets/logo_orig_large.png" alt="Workoflow Bot Logo" width="360px">
 </p>
 
 # Workoflow Bot
