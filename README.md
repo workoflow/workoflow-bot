@@ -1,4 +1,6 @@
-![Workoflow Bot Logo](assets/logo-192.png)
+<p align="center">
+  <img src="assets/logo-192.png" alt="Workoflow Bot Logo" width="192">
+</p>
 
 # Workoflow Bot
 
