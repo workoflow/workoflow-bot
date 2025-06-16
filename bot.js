@@ -2,6 +2,8 @@ const { ActivityHandler, MessageFactory } = require('botbuilder');
 const axios = require('axios'); // Import axios
 
 const N8N_WEBHOOK_URL = process.env.WORKOFLOW_N8N_WEBHOOK_URL || 'https://workflows.vcec.cloud/webhook/016d8b95-d5a5-4ac6-acb5-359a547f642f'; // Replace with your actual n8n webhook URL
+const N8N_BASIC_AUTH_USERNAME = process.env.N8N_BASIC_AUTH_USERNAME;
+const N8N_BASIC_AUTH_PASSWORD = process.env.N8N_BASIC_AUTH_PASSWORD;
 
 console.log('N8N_WEBHOOK_URL:', N8N_WEBHOOK_URL);
 
@@ -11,7 +13,16 @@ class EchoBot extends ActivityHandler {
         this.onMessage(async (context, next) => {
             try {
                 await context.sendActivity(MessageFactory.text('Thinking...', 'Thinking...'));
-                const n8nResponse = await axios.post(N8N_WEBHOOK_URL, context.activity);
+                
+                const config = {};
+                if (N8N_BASIC_AUTH_USERNAME && N8N_BASIC_AUTH_PASSWORD) {
+                    config.auth = {
+                        username: N8N_BASIC_AUTH_USERNAME,
+                        password: N8N_BASIC_AUTH_PASSWORD
+                    };
+                }
+                
+                const n8nResponse = await axios.post(N8N_WEBHOOK_URL, context.activity, config);
 
                 console.log('Received n8n response:', n8nResponse);
                 let n8nReplyText = 'Sorry, I could not get a response from the agent.';
