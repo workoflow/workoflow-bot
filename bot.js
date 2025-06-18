@@ -12,7 +12,7 @@ class EchoBot extends ActivityHandler {
         super();
         this.onMessage(async (context, next) => {
             try {
-                await context.sendActivity(MessageFactory.text('Thinking...(Responses will be generated using AI and may contain mistakes.)', 'Thinking...(Responses will be generated using AI and may contain mistakes.)'));
+                await context.sendActivity(MessageFactory.text('Thinking...\n(Responses will be generated using AI and may contain mistakes.)', 'Thinking...\n(Responses will be generated using AI and may contain mistakes.)'));
                 
                 const config = {};
                 if (N8N_BASIC_AUTH_USERNAME && N8N_BASIC_AUTH_PASSWORD) {
