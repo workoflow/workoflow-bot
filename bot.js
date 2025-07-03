@@ -30,7 +30,20 @@ class EchoBot extends ActivityHandler {
                     n8nReplyText = n8nResponse.data.output;
                 }
 
-                await context.sendActivity(MessageFactory.text(n8nReplyText, n8nReplyText));
+                // Check if there's an attachment in the response
+                if (n8nResponse.data && n8nResponse.data.attachment && n8nResponse.data.attachment.url) {
+                    // Create a message with both text and attachment
+                    const reply = MessageFactory.text(n8nReplyText, n8nReplyText);
+                    reply.attachments = [{
+                        contentType: 'application/octet-stream', // Default content type
+                        contentUrl: n8nResponse.data.attachment.url,
+                        name: 'attachment' // Default name
+                    }];
+                    await context.sendActivity(reply);
+                } else {
+                    // Send just the text message
+                    await context.sendActivity(MessageFactory.text(n8nReplyText, n8nReplyText));
+                }
 
             } catch (error) {
                 console.error('Error calling n8n webhook:', error.message);
