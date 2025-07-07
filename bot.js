@@ -118,17 +118,14 @@ class EchoBot extends ActivityHandler {
                 let attachmentUrl = null;
 
                 // Handle the new response structure
-                if (Array.isArray(n8nResponse.data) && n8nResponse.data.length > 0) {
-                    const firstItem = n8nResponse.data[0];
-                    if (firstItem.response && firstItem.response.output && Array.isArray(firstItem.response.output) && firstItem.response.output.length > 0) {
-                        const outputItem = firstItem.response.output[0];
-                        if (outputItem.output) {
-                            n8nReplyText = outputItem.output;
-                        }
-                        // Check for optional attachment
-                        if (outputItem.attachment && outputItem.attachment.url) {
-                            attachmentUrl = outputItem.attachment.url;
-                        }
+                if (n8nResponse.data && n8nResponse.data.output && Array.isArray(n8nResponse.data.output) && n8nResponse.data.output.length > 0) {
+                    const outputItem = n8nResponse.data.output[0];
+                    if (outputItem.output) {
+                        n8nReplyText = outputItem.output;
+                    }
+                    // Check for optional attachment
+                    if (outputItem.attachment && outputItem.attachment.url) {
+                        attachmentUrl = outputItem.attachment.url;
                     }
                 }
 
