@@ -131,14 +131,9 @@ class EchoBot extends ActivityHandler {
 
                 // Send the response with or without attachment
                 if (attachmentUrl) {
-                    // Create a message with both text and attachment
-                    const reply = MessageFactory.text(n8nReplyText, n8nReplyText);
-                    reply.attachments = [{
-                        contentType: 'application/octet-stream', // Default content type
-                        contentUrl: attachmentUrl,
-                        name: 'attachment' // Default name
-                    }];
-                    await context.sendActivity(reply);
+                    // Send the text with a link to the attachment
+                    const replyWithLink = `${n8nReplyText}\n\n📎 [Download attachment](${attachmentUrl})`;
+                    await context.sendActivity(MessageFactory.text(replyWithLink, replyWithLink));
                 } else {
                     // Send just the text message
                     await context.sendActivity(MessageFactory.text(n8nReplyText, n8nReplyText));
@@ -150,7 +145,13 @@ class EchoBot extends ActivityHandler {
                     console.error('Response data:', error.response.data);
                     console.error('Response status:', error.response.status);
                 }
-                await context.sendActivity(MessageFactory.text('There was an error communicating with the AI agent.'));
+                
+                // Check if the error is about file attachments
+                if (error.message && error.message.includes('File attachments')) {
+                    await context.sendActivity(MessageFactory.text('I received a response but cannot send file attachments directly. Please let me know if you need the information in a different format.'));
+                } else {
+                    await context.sendActivity(MessageFactory.text('There was an error communicating with the AI agent.'));
+                }
             }
 
             await next();
