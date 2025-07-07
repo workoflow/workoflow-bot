@@ -115,17 +115,30 @@ class EchoBot extends ActivityHandler {
 
                 console.log('Received n8n response:', n8nResponse.data);
                 let n8nReplyText = 'Sorry, I could not get a response from the agent.';
-                if (n8nResponse.data && n8nResponse.data.output) {
-                    n8nReplyText = n8nResponse.data.output;
+                let attachmentUrl = null;
+
+                // Handle the new response structure
+                if (Array.isArray(n8nResponse.data) && n8nResponse.data.length > 0) {
+                    const firstItem = n8nResponse.data[0];
+                    if (firstItem.response && firstItem.response.output && Array.isArray(firstItem.response.output) && firstItem.response.output.length > 0) {
+                        const outputItem = firstItem.response.output[0];
+                        if (outputItem.output) {
+                            n8nReplyText = outputItem.output;
+                        }
+                        // Check for optional attachment
+                        if (outputItem.attachment && outputItem.attachment.url) {
+                            attachmentUrl = outputItem.attachment.url;
+                        }
+                    }
                 }
 
-                // Check if there's an attachment in the response
-                if (n8nResponse.data && n8nResponse.data.attachment && n8nResponse.data.attachment.url) {
+                // Send the response with or without attachment
+                if (attachmentUrl) {
                     // Create a message with both text and attachment
                     const reply = MessageFactory.text(n8nReplyText, n8nReplyText);
                     reply.attachments = [{
                         contentType: 'application/octet-stream', // Default content type
-                        contentUrl: n8nResponse.data.attachment.url,
+                        contentUrl: attachmentUrl,
                         name: 'attachment' // Default name
                     }];
                     await context.sendActivity(reply);
