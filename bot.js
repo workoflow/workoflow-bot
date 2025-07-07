@@ -12,6 +12,7 @@ class EchoBot extends ActivityHandler {
         super();
         this.onMessage(async (context, next) => {
             try {
+                console.log('Received teams context:', context);
                 await context.sendActivity(MessageFactory.text('Thinking...  \n(Responses will be generated using AI and may contain mistakes.)', 'Thinking...  \n(Responses will be generated using AI and may contain mistakes.)'));
                 
                 const config = {};
