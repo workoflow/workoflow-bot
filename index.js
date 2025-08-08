@@ -68,13 +68,14 @@ adapter.onTurnError = onTurnErrorHandler;
 const myBot = new EchoBot();
 
 // Health check endpoint
-server.get('/api/health', (req, res) => {
+server.get('/api/health', (req, res, next) => {
     res.send({
         status: 'healthy',
         timestamp: new Date().toISOString(),
         service: 'workoflow-bot',
         port: process.env.WORKOFLOW_PORT || 3978
     });
+    return next();
 });
 
 // Listen for incoming requests.
