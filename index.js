@@ -67,6 +67,16 @@ adapter.onTurnError = onTurnErrorHandler;
 // Create the main dialog.
 const myBot = new EchoBot();
 
+// Health check endpoint
+server.get('/api/health', (req, res) => {
+    res.send({
+        status: 'healthy',
+        timestamp: new Date().toISOString(),
+        service: 'workoflow-bot',
+        port: process.env.WORKOFLOW_PORT || 3978
+    });
+});
+
 // Listen for incoming requests.
 server.post('/api/messages', async (req, res) => {
     // Route received a request to adapter for processing
