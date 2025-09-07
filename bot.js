@@ -151,14 +151,14 @@ class EchoBot extends ActivityHandler {
                 try {
                     // Extract user email from Teams context
                     // Teams provides the user's email in the from.aadObjectId or we can use the name as fallback
-                    const userEmail = context.activity.from.name || 'patrick.jaja@example.com';
+                    const userName = context.activity.from.name || 'patrick.jaja@example.com';
                     
                     // Get organization UUID from Teams tenant ID in conversation context
                     const orgUuid = context.activity.conversation.tenantId || 'a83e229a-7bda-4b7c-8969-4201c1382068'; // empty on localhost
                     
                     // Generate the magic link
                     const magicLink = generateMagicLink(
-                        userEmail,
+                        userName,
                         orgUuid,
                         process.env.MAGIC_LINK_DOMAIN || 'http://localhost:3979',
                         process.env.MAGIC_LINK_SECRET || 'your-very-secret-key-change-this-in-production-minimum-32-chars'

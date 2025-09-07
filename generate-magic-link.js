@@ -10,16 +10,16 @@ const jwt = require('jsonwebtoken');
 /**
  * Generate a magic link for user authentication
  * 
- * @param {string} email - User's email address
+ * @param {string} name - User's name
  * @param {string} orgUuid - Organization UUID from Workoflow
  * @param {string} baseUrl - Base URL of your Workoflow instance (e.g., 'https://yourdomain.com')
  * @param {string} secret - The MAGIC_LINK_SECRET from your .env file
  * @returns {string} - The complete magic link URL
  */
-function generateMagicLink(email, orgUuid, baseUrl, secret) {
+function generateMagicLink(name, orgUuid, baseUrl, secret) {
     // Create the JWT payload
     const payload = {
-        email: email,
+        name: name,
         org_uuid: orgUuid,
         type: 'magic_link',
         iat: Math.floor(Date.now() / 1000),
