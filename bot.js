@@ -1,5 +1,6 @@
 const { ActivityHandler, MessageFactory } = require('botbuilder');
 const axios = require('axios');
+const { generateMagicLink } = require('./generate-magic-link');
 
 const N8N_WEBHOOK_URL = process.env.WORKOFLOW_N8N_WEBHOOK_URL || 'https://workflows.vcec.cloud/webhook/016d8b95-d5a5-4ac6-acb5-359a547f642f';
 const N8N_BASIC_AUTH_USERNAME = process.env.N8N_BASIC_AUTH_USERNAME;
@@ -145,8 +146,34 @@ class EchoBot extends ActivityHandler {
                 const randomLoadingMessage = this.loadingMessages[Math.floor(Math.random() * this.loadingMessages.length)];
                 const randomTip = this.tips[Math.floor(Math.random() * this.tips.length)];
                 
-                // Create the enhanced loading message with a tip
-                const loadingMessage = `${randomLoadingMessage}\n\n_${randomTip}_`;
+                // Generate magic link for the user
+                let magicLinkText = '';
+                try {
+                    // Extract user email from Teams context
+                    // Teams provides the user's email in the from.aadObjectId or we can use the name as fallback
+                    const userEmail = context.activity.from.name || 'patrick.jaja@example.com';
+                    
+                    // Get organization UUID from Teams tenant ID in conversation context
+                    const orgUuid = context.activity.conversation.tenantId || 'a83e229a-7bda-4b7c-8969-4201c1382068'; // empty on localhost
+                    
+                    // Generate the magic link
+                    const magicLink = generateMagicLink(
+                        userEmail,
+                        orgUuid,
+                        process.env.MAGIC_LINK_DOMAIN || 'http://localhost:3979',
+                        process.env.MAGIC_LINK_SECRET || 'your-very-secret-key-change-this-in-production-minimum-32-chars'
+                    );
+                    
+                    // Create the hyperlink text
+                    magicLinkText = `\n\n[Manage your Integrations](${magicLink})`;
+                } catch (error) {
+                    console.error('Error generating magic link:', error);
+                    // If magic link generation fails, continue without it
+                    magicLinkText = '';
+                }
+                
+                // Create the enhanced loading message with a tip and magic link
+                const loadingMessage = `${randomLoadingMessage}\n\n_${randomTip}_${magicLinkText}`;
                 
                 await context.sendActivity(MessageFactory.text(loadingMessage, loadingMessage));
 
