@@ -245,8 +245,8 @@ class EchoBot extends ActivityHandler {
                     // Continue without status bar if it fails
                 }
                 
-                // Create the enhanced loading message with a tip, magic link, and status bar
-                const loadingMessage = `${randomLoadingMessage}\n\n_${randomTip}_${magicLinkText}${statusBarText}`;
+                // Create the enhanced loading message with tip, status bar, then magic link at the end
+                const loadingMessage = `${randomLoadingMessage}\n\n_${randomTip}_${statusBarText}${magicLinkText}`;
                 
                 await context.sendActivity(MessageFactory.text(loadingMessage, loadingMessage));
 
