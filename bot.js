@@ -6,7 +6,70 @@ const N8N_WEBHOOK_URL = process.env.WORKOFLOW_N8N_WEBHOOK_URL || 'https://workfl
 const N8N_BASIC_AUTH_USERNAME = process.env.N8N_BASIC_AUTH_USERNAME;
 const N8N_BASIC_AUTH_PASSWORD = process.env.N8N_BASIC_AUTH_PASSWORD;
 
+// Azure OpenAI configuration
+const AZURE_OPENAI_ENDPOINT = process.env.AZURE_OPENAI_ENDPOINT || 'https://oai-cec-de-germany-west-central.openai.azure.com';
+const AZURE_OPENAI_API_KEY = process.env.AZURE_OPENAI_API_KEY || '';
+const AZURE_OPENAI_DEPLOYMENT = process.env.AZURE_OPENAI_DEPLOYMENT || 'gpt-4.1';
+const AZURE_OPENAI_API_VERSION = process.env.AZURE_OPENAI_API_VERSION || '2024-12-01-preview';
+
 console.log('N8N_WEBHOOK_URL:', N8N_WEBHOOK_URL);
+
+// Helper function to create progress bar
+function createProgressBar(percentage) {
+    const filled = Math.round(percentage / 10);
+    const empty = 10 - filled;
+    return '[' + '█'.repeat(filled) + '░'.repeat(empty) + ']';
+}
+
+// Function to format rate limit status
+function formatRateLimitStatus(headers) {
+    if (!headers) return null;
+    
+    const model = headers['x-ms-deployment-name'] || AZURE_OPENAI_DEPLOYMENT;
+    const region = headers['x-ms-region'] || 'Unknown Region';
+    const remainingRequests = parseInt(headers['x-ratelimit-remaining-requests'] || 0);
+    const limitRequests = parseInt(headers['x-ratelimit-limit-requests'] || 1);
+    const remainingTokens = parseInt(headers['x-ratelimit-remaining-tokens'] || 0);
+    const limitTokens = parseInt(headers['x-ratelimit-limit-tokens'] || 1);
+    
+    const requestPercentage = Math.round((remainingRequests / limitRequests) * 100);
+    const tokenPercentage = Math.round((remainingTokens / limitTokens) * 100);
+    
+    const requestBar = createProgressBar(requestPercentage);
+    const tokenBar = createProgressBar(tokenPercentage);
+    
+    return `_${model} (${region}) • ${requestBar} ${requestPercentage}% (RLR) • ${tokenBar} ${tokenPercentage}% (RLT)_`;
+}
+
+// Function to get Azure OpenAI rate limit status (live, no cache)
+async function getAzureOpenAIStatus() {
+    try {
+        // Make a minimal API call to get rate limit headers
+        const url = `${AZURE_OPENAI_ENDPOINT}/openai/deployments/${AZURE_OPENAI_DEPLOYMENT}/chat/completions?api-version=${AZURE_OPENAI_API_VERSION}`;
+        
+        const response = await axios.post(url, {
+            messages: [
+                { role: "system", content: "You are a helpful assistant." },
+                { role: "user", content: "Hi" }
+            ],
+            max_tokens: 1,
+            temperature: 0
+        }, {
+            headers: {
+                'api-key': AZURE_OPENAI_API_KEY,
+                'Content-Type': 'application/json'
+            },
+            validateStatus: function (status) {
+                return status < 500; // Accept any status less than 500
+            }
+        });
+        
+        return response.headers;
+    } catch (error) {
+        console.error('Error getting Azure OpenAI status:', error.message);
+        return null;
+    }
+}
 
 class EchoBot extends ActivityHandler {
     constructor() {
@@ -172,8 +235,21 @@ class EchoBot extends ActivityHandler {
                     magicLinkText = '';
                 }
                 
-                // Create the enhanced loading message with a tip and magic link
-                const loadingMessage = `${randomLoadingMessage}\n\n_${randomTip}_${magicLinkText}`;
+                // Get Azure OpenAI rate limit status
+                let statusBarText = '';
+                try {
+                    const azureHeaders = await getAzureOpenAIStatus();
+                    const formattedStatus = formatRateLimitStatus(azureHeaders);
+                    if (formattedStatus) {
+                        statusBarText = `\n${formattedStatus}`;
+                    }
+                } catch (error) {
+                    console.error('Error getting Azure OpenAI status:', error);
+                    // Continue without status bar if it fails
+                }
+                
+                // Create the enhanced loading message with a tip, magic link, and status bar
+                const loadingMessage = `${randomLoadingMessage}\n\n_${randomTip}_${magicLinkText}${statusBarText}`;
                 
                 await context.sendActivity(MessageFactory.text(loadingMessage, loadingMessage));
 

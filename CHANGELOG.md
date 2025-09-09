@@ -14,11 +14,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Magic link uses Teams tenant ID as organization UUID dynamically
   - Links expire after 24 hours for security
   - Support for user email and name extraction from Teams context
+- Azure OpenAI rate limit status bar
+  - Real-time monitoring of API rate limits
+  - Visual progress bars showing request and token usage
+  - Displays model name, region, and usage percentages
+  - Format: `gpt-4.1 (Germany West Central) • [████████░░] 99% (RLR) • [████████░░] 99% (RLT)`
 
 ### Changed
 - Enhanced bot loading messages with clickable integration management links
 - Loading messages now include magic link for direct access to Workoflow platform
+- Loading messages now display Azure OpenAI rate limit status below magic link
 
 ### Security
 - JWT tokens for magic links use HS256 algorithm with configurable secret
 - Magic link secret stored in environment variables
+- Azure OpenAI API key stored in environment variables
