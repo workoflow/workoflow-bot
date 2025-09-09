@@ -35,10 +35,7 @@ function formatRateLimitStatus(headers) {
     const requestPercentage = Math.round((remainingRequests / limitRequests) * 100);
     const tokenPercentage = Math.round((remainingTokens / limitTokens) * 100);
     
-    const requestBar = createProgressBar(requestPercentage);
-    const tokenBar = createProgressBar(tokenPercentage);
-    
-    return `_${model} (${region}) • ${requestBar} ${requestPercentage}% (RLR) • ${tokenBar} ${tokenPercentage}% (RLT)_`;
+    return `_📊 ${model} (${region}) • ${requestPercentage}% (RLR) • ${tokenPercentage}% (RLT)_`;
 }
 
 // Function to get Azure OpenAI rate limit status (live, no cache)
