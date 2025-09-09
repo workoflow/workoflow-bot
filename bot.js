@@ -238,7 +238,7 @@ class EchoBot extends ActivityHandler {
                     const azureHeaders = await getAzureOpenAIStatus();
                     const formattedStatus = formatRateLimitStatus(azureHeaders);
                     if (formattedStatus) {
-                        statusBarText = `\n${formattedStatus}`;
+                        statusBarText = `\n\n${formattedStatus}`;
                     }
                 } catch (error) {
                     console.error('Error getting Azure OpenAI status:', error);
