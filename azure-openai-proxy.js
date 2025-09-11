@@ -12,10 +12,8 @@ const DEFAULT_API_VERSION = process.env.AZURE_OPENAI_API_VERSION || '2024-12-01-
  */
 async function azureOpenAIProxy(req, res) {
     try {
-        console.log("ICOMMING Request");
-        console.log(req);
-        // Extract the path after /api/azure-openai/
-        const originalPath = req.url.replace(/^\/api\/azure-openai/, '');
+        // Extract the path - we now only handle /openai/* paths
+        const originalPath = req.url; // Will be /openai/deployments/...
         
         // Get credentials - prefer from request headers, fallback to env
         const apiKey = req.headers['api-key'] || DEFAULT_AZURE_API_KEY;
@@ -27,18 +25,8 @@ async function azureOpenAIProxy(req, res) {
             return;
         }
         
-        // Build the target URL
-        let targetUrl;
-        if (originalPath.startsWith('/openai/')) {
-            // Path already includes /openai/, use as-is
-            targetUrl = `${endpoint}${originalPath}`;
-        } else if (originalPath === '' || originalPath === '/') {
-            // Default to chat completions endpoint
-            targetUrl = `${endpoint}/openai/deployments/${DEFAULT_DEPLOYMENT}/chat/completions?api-version=${DEFAULT_API_VERSION}`;
-        } else {
-            // Assume it's a deployment path
-            targetUrl = `${endpoint}/openai${originalPath}`;
-        }
+        // Build the target URL - simple concatenation since path already has /openai/
+        let targetUrl = `${endpoint}${originalPath}`;
         
         // Ensure API version is in the URL if not present
         if (!targetUrl.includes('api-version=')) {

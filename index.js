@@ -79,9 +79,9 @@ server.get('/api/health', (req, res, next) => {
     return next();
 });
 
-// Azure OpenAI proxy endpoint
+// Azure OpenAI proxy endpoint - mimics Azure OpenAI's URL structure
 // Handles all HTTP methods (GET, POST, PUT, DELETE, etc.)
-server.opts('/api/azure-openai/*', (req, res, next) => {
+server.opts('/openai/*', (req, res, next) => {
     // Handle CORS preflight
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
@@ -91,11 +91,11 @@ server.opts('/api/azure-openai/*', (req, res, next) => {
 });
 
 // Route all Azure OpenAI requests through the proxy
-server.get('/api/azure-openai/*', azureOpenAIProxy);
-server.post('/api/azure-openai/*', azureOpenAIProxy);
-server.put('/api/azure-openai/*', azureOpenAIProxy);
-server.del('/api/azure-openai/*', azureOpenAIProxy);
-server.patch('/api/azure-openai/*', azureOpenAIProxy);
+server.get('/openai/*', azureOpenAIProxy);
+server.post('/openai/*', azureOpenAIProxy);
+server.put('/openai/*', azureOpenAIProxy);
+server.del('/openai/*', azureOpenAIProxy);
+server.patch('/openai/*', azureOpenAIProxy);
 
 // Listen for incoming requests.
 server.post('/api/messages', async (req, res) => {

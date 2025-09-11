@@ -17,6 +17,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - CORS support for cross-origin requests
   - Test script `test-proxy.js` for verification
 
+### Changed
+- Refactored proxy to use root-level `/openai/*` endpoints instead of `/api/azure-openai/*`
+  - Proxy now mimics Azure OpenAI's exact URL structure for n8n compatibility
+  - Simplified path handling in proxy middleware
+  - Updated test script to use new endpoint structure
+
 ### Fixed
 - Corrected Restify route patterns from `/.*` to `/*` for proper wildcard matching in Restify 7.x
 
