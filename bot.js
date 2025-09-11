@@ -136,6 +136,15 @@ class EchoBot extends ActivityHandler {
 
         this.onMessage(async (context, next) => {
             try {
+                // Set fallback values at the highest level for Bot Framework Emulator compatibility
+                // These will be used throughout the message handling
+                if (!context.activity.from.name) {
+                    context.activity.from.name = 'Patrick Schönfeld';
+                }
+                if (!context.activity.conversation.tenantId) {
+                    context.activity.conversation.tenantId = 'a83e229a-7bda-4b7c-8969-4201c1382068';
+                }
+
                 // Comprehensive logging to understand the activity structure
                 console.log('=== FULL ACTIVITY OBJECT ===');
                 console.log(JSON.stringify(context.activity, null, 2));
@@ -209,12 +218,9 @@ class EchoBot extends ActivityHandler {
                 // Generate magic link for the user
                 let magicLinkText = '';
                 try {
-                    // Extract user email from Teams context
-                    // Teams provides the user's email in the from.aadObjectId or we can use the name as fallback
-                    const userName = context.activity.from.name || 'patrick.jaja@example.com';
-                    
-                    // Get organization UUID from Teams tenant ID in conversation context
-                    const orgUuid = context.activity.conversation.tenantId || 'a83e229a-7bda-4b7c-8969-4201c1382068'; // empty on localhost
+                    // Use the values from context.activity which now have fallbacks set at the top
+                    const userName = context.activity.from.name;
+                    const orgUuid = context.activity.conversation.tenantId;
                     
                     // Generate the magic link
                     const magicLink = generateMagicLink(
