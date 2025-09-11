@@ -16,6 +16,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Forwards rate limit headers back to n8n
   - CORS support for cross-origin requests
   - Test script `test-proxy.js` for verification
+- Enhanced logging for Azure OpenAI proxy to track tool usage
+  - Logs tools/functions provided in requests
+  - Logs tool calls made by the AI in responses
+  - Detailed token usage breakdown (prompt/completion/total)
+  - Optional environment variables for debug logging (LOG_FULL_REQUEST, LOG_FULL_RESPONSE, LOG_TOOL_ARGUMENTS, SHOW_COST_ESTIMATE)
+  - Shows finish reason and refusal messages
 
 ### Changed
 - Refactored proxy to use root-level `/openai/*` endpoints instead of `/api/azure-openai/*`
