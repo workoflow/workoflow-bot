@@ -12,7 +12,7 @@ const DEFAULT_API_VERSION = process.env.AZURE_OPENAI_API_VERSION || '2024-12-01-
  */
 async function azureOpenAIProxy(req, res) {
     try {
-        const originalPath = req.url;
+        let originalPath = req.url;
         
         const apiKey = req.headers['api-key'] || DEFAULT_AZURE_API_KEY;
         const endpoint = req.headers['azure-endpoint'] || DEFAULT_AZURE_ENDPOINT;
@@ -35,6 +35,8 @@ async function azureOpenAIProxy(req, res) {
         // Log the proxy request
         console.log(`[Azure OpenAI Proxy] ${new Date().toISOString()}`);
         console.log(`  Method: ${req.method}`);
+        console.log(`  Original Path: ${originalPath}`);
+        console.log(`  Endpoint: ${cleanEndpoint}`);
         console.log(`  Target URL: ${targetUrl}`);
         console.log(`  Has API Key: ${!!apiKey}`);
         
