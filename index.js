@@ -23,18 +23,6 @@ const { azureOpenAIProxy } = require('./azure-openai-proxy');
 const server = restify.createServer();
 server.use(restify.plugins.bodyParser());
 
-// Log ALL incoming requests for debugging
-server.use((req, res, next) => {
-    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
-    console.log('  Headers:', {
-        host: req.headers.host,
-        'content-type': req.headers['content-type'],
-        'api-key': req.headers['api-key'] ? '***hidden***' : undefined,
-        'user-agent': req.headers['user-agent']
-    });
-    next();
-});
-
 server.listen(process.env.WORKOFLOW_PORT || 3978, () => {
     console.log(`\n${ server.name } listening to ${ server.url }`);
     console.log('\nGet Bot Framework Emulator: https://aka.ms/botframework-emulator');
@@ -124,27 +112,4 @@ server.on('upgrade', async (req, socket, head) => {
     streamingAdapter.onTurnError = onTurnErrorHandler;
 
     await streamingAdapter.process(req, socket, head, (context) => myBot.run(context));
-});
-
-// Catch-all route for unmatched requests (must be last)
-server.get('/*', (req, res, next) => {
-    console.log('[UNMATCHED GET REQUEST]', req.url);
-    console.log('  Full headers:', JSON.stringify(req.headers, null, 2));
-    res.send(404, { 
-        error: 'Route not found', 
-        requested: req.url,
-        method: req.method,
-        message: 'This request did not match any configured routes'
-    });
-});
-
-server.post('/*', (req, res, next) => {
-    console.log('[UNMATCHED POST REQUEST]', req.url);
-    console.log('  Full headers:', JSON.stringify(req.headers, null, 2));
-    res.send(404, { 
-        error: 'Route not found', 
-        requested: req.url,
-        method: req.method,
-        message: 'This request did not match any configured routes'
-    });
 });
