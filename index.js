@@ -3,7 +3,7 @@ const path = require('path');
 const dotenv = require('dotenv');
 // Import required bot configuration.
 const ENV_FILE = path.join(__dirname, '.env');
-dotenv.config({ path: ENV_FILE, override: false });
+dotenv.config({ path: ENV_FILE });
 
 const restify = require('restify');
 
