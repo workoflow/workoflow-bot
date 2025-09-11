@@ -12,10 +12,8 @@ const DEFAULT_API_VERSION = process.env.AZURE_OPENAI_API_VERSION || '2024-12-01-
  */
 async function azureOpenAIProxy(req, res) {
     try {
-        // Extract the path - we now only handle /openai/* paths
-        const originalPath = req.url; // Will be /openai/deployments/...
+        const originalPath = req.url;
         
-        // Get credentials - prefer from request headers, fallback to env
         const apiKey = req.headers['api-key'] || DEFAULT_AZURE_API_KEY;
         const endpoint = req.headers['azure-endpoint'] || DEFAULT_AZURE_ENDPOINT;
         
@@ -25,8 +23,8 @@ async function azureOpenAIProxy(req, res) {
             return;
         }
         
-        // Build the target URL - simple concatenation since path already has /openai/
-        let targetUrl = `${endpoint}${originalPath}`;
+        const cleanEndpoint = endpoint.replace(/\/+$/, '');
+        let targetUrl = `${cleanEndpoint}${originalPath}`;
         
         // Ensure API version is in the URL if not present
         if (!targetUrl.includes('api-version=')) {
