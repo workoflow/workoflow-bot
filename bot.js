@@ -1,6 +1,7 @@
 const { ActivityHandler, MessageFactory } = require('botbuilder');
 const axios = require('axios');
 const { generateMagicLink } = require('./generate-magic-link');
+const { initializePhoenix } = require('./phoenix');
 
 const N8N_WEBHOOK_URL = process.env.WORKOFLOW_N8N_WEBHOOK_URL || 'https://workflows.vcec.cloud/webhook/016d8b95-d5a5-4ac6-acb5-359a547f642f';
 const N8N_BASIC_AUTH_USERNAME = process.env.N8N_BASIC_AUTH_USERNAME;
@@ -11,6 +12,9 @@ const AZURE_OPENAI_ENDPOINT = process.env.AZURE_OPENAI_ENDPOINT || 'https://oai-
 const AZURE_OPENAI_API_KEY = process.env.AZURE_OPENAI_API_KEY || '';
 const AZURE_OPENAI_DEPLOYMENT = process.env.AZURE_OPENAI_DEPLOYMENT || 'gpt-4.1';
 const AZURE_OPENAI_API_VERSION = process.env.AZURE_OPENAI_API_VERSION || '2024-12-01-preview';
+
+// Initialize Phoenix tracing
+initializePhoenix();
 
 console.log('N8N_WEBHOOK_URL:', N8N_WEBHOOK_URL);
 

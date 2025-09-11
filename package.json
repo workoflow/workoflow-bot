@@ -18,14 +18,27 @@
         "url": "https://github.com"
     },
     "dependencies": {
+        "@arizeai/openinference-instrumentation-openai": "^3.2.2",
+        "@arizeai/openinference-semantic-conventions": "^2.1.1",
+        "@arizeai/phoenix-client": "^4.0.1",
         "@microsoft/teamsapp-cli": "^3.1.0",
         "@microsoft/teamsfx": "^3.0.2",
         "@microsoft/teamsfx-cli": "^2.1.2",
+        "@opentelemetry/api": "^1.9.0",
+        "@opentelemetry/exporter-trace-otlp-grpc": "^0.52.1",
+        "@opentelemetry/exporter-trace-otlp-http": "^0.52.1",
+        "@opentelemetry/instrumentation": "^0.52.1",
+        "@opentelemetry/instrumentation-http": "^0.52.1",
+        "@opentelemetry/resources": "^1.25.1",
+        "@opentelemetry/sdk-trace-base": "^1.25.1",
+        "@opentelemetry/sdk-trace-node": "^1.25.1",
+        "@opentelemetry/semantic-conventions": "^1.25.1",
         "axios": "^1.9.0",
         "botbuilder": "~4.22.1",
         "dotenv": "~8.2.0",
         "jsonwebtoken": "^9.0.2",
         "ngrok": "^5.0.0-beta.2",
+        "openai": "^5.20.1",
         "restify": "~11.1.0"
     },
     "devDependencies": {

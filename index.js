@@ -7,6 +7,10 @@ dotenv.config({ path: ENV_FILE });
 
 const restify = require('restify');
 
+// Initialize Phoenix tracing for observability
+const { initializePhoenix } = require('./phoenix');
+initializePhoenix();
+
 // Import required bot services.
 // See https://aka.ms/bot-services to learn more about the different parts of a bot.
 const {
@@ -76,6 +80,51 @@ server.get('/api/health', (req, res, next) => {
         service: 'workoflow-bot',
         port: process.env.WORKOFLOW_PORT || 3978
     });
+    return next();
+});
+
+// Telemetry test endpoint
+server.get('/api/test-telemetry', (req, res, next) => {
+    const { startSpan, LLMAttributes, SpanKind, SpanStatusCode } = require('./telemetry');
+    
+    console.log('[Test] Creating test telemetry span...');
+    const span = startSpan('test.telemetry.endpoint', {
+        kind: SpanKind.SERVER,
+        attributes: {
+            'http.method': 'GET',
+            'http.path': '/api/test-telemetry',
+            'test.purpose': 'verify-phoenix-connection'
+        }
+    });
+    
+    // Add some test attributes
+    if (span && span.setAttribute) {
+        span.setAttribute('user.id', 'test-user');
+        span.setAttribute('user.name', 'Test User');
+        span.setAttribute(LLMAttributes.TOKEN_COUNT_TOTAL, 100);
+        span.setAttribute(LLMAttributes.COST_TOTAL, 0.003);
+        span.setAttribute('phoenix.project.name', process.env.PHOENIX_PROJECT_NAME || 'workoflow-teams-bot');
+        console.log('[Test] Added attributes to span');
+    }
+    
+    // End the span
+    if (span && span.end) {
+        span.setStatus({ code: SpanStatusCode.OK });
+        span.end();
+        console.log('[Test] Span ended and sent');
+    }
+    
+    const response = {
+        message: 'Test telemetry span created',
+        telemetryEnabled: process.env.TELEMETRY_ENABLED === 'true',
+        phoenixEndpoint: process.env.PHOENIX_COLLECTOR_ENDPOINT || 'not configured',
+        projectName: process.env.PHOENIX_PROJECT_NAME || 'workoflow-teams-bot',
+        phoenixUI: 'http://localhost:6006',
+        timestamp: new Date().toISOString()
+    };
+    
+    console.log('[Test] Response:', response);
+    res.send(response);
     return next();
 });
 
