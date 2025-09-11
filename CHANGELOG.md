@@ -17,6 +17,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - CORS support for cross-origin requests
   - Test script `test-proxy.js` for verification
 
+### Fixed
+- Corrected Restify route patterns from `/.*` to `/*` for proper wildcard matching in Restify 7.x
+
 ## 2025-09-09
 
 ### Added
