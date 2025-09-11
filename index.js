@@ -83,49 +83,52 @@ server.get('/api/health', (req, res, next) => {
     return next();
 });
 
-// Telemetry test endpoint
-server.get('/api/test-telemetry', (req, res, next) => {
-    const { startSpan, LLMAttributes, SpanKind, SpanStatusCode } = require('./telemetry');
+// Phoenix telemetry test endpoint
+server.get('/api/test-telemetry', async (req, res) => {
+    const { getOpenAIClient } = require('./phoenix');
     
-    console.log('[Test] Creating test telemetry span...');
-    const span = startSpan('test.telemetry.endpoint', {
-        kind: SpanKind.SERVER,
-        attributes: {
-            'http.method': 'GET',
-            'http.path': '/api/test-telemetry',
-            'test.purpose': 'verify-phoenix-connection'
-        }
-    });
+    console.log('[Phoenix Test] Testing Phoenix integration...');
+    const openaiClient = getOpenAIClient();
     
-    // Add some test attributes
-    if (span && span.setAttribute) {
-        span.setAttribute('user.id', 'test-user');
-        span.setAttribute('user.name', 'Test User');
-        span.setAttribute(LLMAttributes.TOKEN_COUNT_TOTAL, 100);
-        span.setAttribute(LLMAttributes.COST_TOTAL, 0.003);
-        span.setAttribute('phoenix.project.name', process.env.PHOENIX_PROJECT_NAME || 'workoflow-teams-bot');
-        console.log('[Test] Added attributes to span');
+    if (!openaiClient) {
+        console.error('[Phoenix Test] OpenAI client not initialized');
+        res.send(500, { error: 'Phoenix integration not initialized' });
+        return;
     }
     
-    // End the span
-    if (span && span.end) {
-        span.setStatus({ code: SpanStatusCode.OK });
-        span.end();
-        console.log('[Test] Span ended and sent');
+    try {
+        // Make a simple test call that will be traced by Phoenix
+        console.log('[Phoenix Test] Making test OpenAI call...');
+        const response = await openaiClient.chat.completions.create({
+            model: process.env.AZURE_OPENAI_DEPLOYMENT || 'gpt-4.1',
+            messages: [
+                { role: "system", content: "You are a test assistant." },
+                { role: "user", content: "Respond with 'Phoenix test successful'" }
+            ],
+            max_tokens: 10,
+            temperature: 0
+        });
+        
+        const testResponse = {
+            message: 'Phoenix test successful',
+            phoenixEnabled: process.env.PHOENIX_ENABLED === 'true',
+            phoenixEndpoint: process.env.PHOENIX_COLLECTOR_ENDPOINT || 'http://localhost:6006',
+            projectName: process.env.PHOENIX_PROJECT_NAME || 'workoflow-bot',
+            phoenixUI: process.env.PHOENIX_COLLECTOR_ENDPOINT?.replace('/v1/traces', '') || 'http://localhost:6006',
+            openaiResponse: response.choices[0]?.message?.content || 'No response',
+            timestamp: new Date().toISOString()
+        };
+        
+        console.log('[Phoenix Test] Test completed:', testResponse);
+        res.send(testResponse);
+    } catch (error) {
+        console.error('[Phoenix Test] Error:', error.message);
+        res.send(500, { 
+            error: 'Phoenix test failed', 
+            message: error.message,
+            phoenixEnabled: process.env.PHOENIX_ENABLED === 'true'
+        });
     }
-    
-    const response = {
-        message: 'Test telemetry span created',
-        telemetryEnabled: process.env.TELEMETRY_ENABLED === 'true',
-        phoenixEndpoint: process.env.PHOENIX_COLLECTOR_ENDPOINT || 'not configured',
-        projectName: process.env.PHOENIX_PROJECT_NAME || 'workoflow-teams-bot',
-        phoenixUI: 'http://localhost:6006',
-        timestamp: new Date().toISOString()
-    };
-    
-    console.log('[Test] Response:', response);
-    res.send(response);
-    return next();
 });
 
 // Azure OpenAI proxy endpoint - mimics Azure OpenAI's URL structure

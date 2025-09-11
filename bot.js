@@ -1,40 +1,41 @@
 const { ActivityHandler, MessageFactory } = require('botbuilder');
 const axios = require('axios');
 const { generateMagicLink } = require('./generate-magic-link');
-const { initializePhoenix } = require('./phoenix');
+const { getOpenAIClient } = require('./phoenix');
 
 const N8N_WEBHOOK_URL = process.env.WORKOFLOW_N8N_WEBHOOK_URL || 'https://workflows.vcec.cloud/webhook/016d8b95-d5a5-4ac6-acb5-359a547f642f';
 const N8N_BASIC_AUTH_USERNAME = process.env.N8N_BASIC_AUTH_USERNAME;
 const N8N_BASIC_AUTH_PASSWORD = process.env.N8N_BASIC_AUTH_PASSWORD;
 
-// Azure OpenAI configuration
+// Azure OpenAI configuration for rate limit monitoring
 const AZURE_OPENAI_ENDPOINT = process.env.AZURE_OPENAI_ENDPOINT || 'https://oai-cec-de-germany-west-central.openai.azure.com';
 const AZURE_OPENAI_API_KEY = process.env.AZURE_OPENAI_API_KEY || '';
 const AZURE_OPENAI_DEPLOYMENT = process.env.AZURE_OPENAI_DEPLOYMENT || 'gpt-4.1';
 const AZURE_OPENAI_API_VERSION = process.env.AZURE_OPENAI_API_VERSION || '2024-12-01-preview';
 
-// Initialize Phoenix tracing
-initializePhoenix();
+// Initialize OpenAI client with Phoenix instrumentation
+// This client is used by the proxy endpoint for N8N requests
+const openaiClient = getOpenAIClient();
+if (!openaiClient) {
+    console.warn('[Bot] OpenAI client not initialized. Phoenix tracing disabled.');
+}
 
 console.log('N8N_WEBHOOK_URL:', N8N_WEBHOOK_URL);
 
-// Helper function to create progress bar
-function createProgressBar(percentage) {
-    const filled = Math.round(percentage / 10);
-    const empty = 10 - filled;
-    return '[' + '█'.repeat(filled) + '░'.repeat(empty) + ']';
-}
-
-// Function to format rate limit status
+// Function to format rate limit status into a compact status bar
 function formatRateLimitStatus(headers) {
     if (!headers) return null;
     
+    const remainingRequests = headers['x-ratelimit-remaining-requests'];
+    const limitRequests = headers['x-ratelimit-limit-requests'];
+    const remainingTokens = headers['x-ratelimit-remaining-tokens'];
+    const limitTokens = headers['x-ratelimit-limit-tokens'];
     const model = headers['x-ms-deployment-name'] || AZURE_OPENAI_DEPLOYMENT;
-    const region = headers['x-ms-region'] || 'Unknown Region';
-    const remainingRequests = parseInt(headers['x-ratelimit-remaining-requests'] || 0);
-    const limitRequests = parseInt(headers['x-ratelimit-limit-requests'] || 1);
-    const remainingTokens = parseInt(headers['x-ratelimit-remaining-tokens'] || 0);
-    const limitTokens = parseInt(headers['x-ratelimit-limit-tokens'] || 1);
+    const region = headers['x-ms-region'] || 'unknown';
+    
+    if (!remainingRequests || !limitRequests || !remainingTokens || !limitTokens) {
+        return null;
+    }
     
     const requestPercentage = Math.round((remainingRequests / limitRequests) * 100);
     const tokenPercentage = Math.round((remainingTokens / limitTokens) * 100);
@@ -42,10 +43,12 @@ function formatRateLimitStatus(headers) {
     return `_📊 ${model} (${region}) • ${requestPercentage}% (RLR) • ${tokenPercentage}% (RLT)_`;
 }
 
-// Function to get Azure OpenAI rate limit status (live, no cache)
+// Function to get Azure OpenAI rate limit status (using direct call for headers)
+// This is separate from Phoenix instrumentation to get rate limit info
 async function getAzureOpenAIStatus() {
     try {
-        // Make a minimal API call to get rate limit headers
+        // Make a minimal direct API call just to get rate limit headers
+        // This won't be traced by Phoenix but gives us the headers we need
         const url = `${AZURE_OPENAI_ENDPOINT}/openai/deployments/${AZURE_OPENAI_DEPLOYMENT}/chat/completions?api-version=${AZURE_OPENAI_API_VERSION}`;
         
         const response = await axios.post(url, {
@@ -71,6 +74,9 @@ async function getAzureOpenAIStatus() {
         return null;
     }
 }
+
+// Note: Main OpenAI calls should go through the proxy endpoint (/openai/*) for Phoenix tracing
+// N8N workflow must be configured to use http://bot-host:3978/openai/* instead of direct Azure OpenAI
 
 class EchoBot extends ActivityHandler {
     constructor() {

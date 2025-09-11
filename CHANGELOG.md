@@ -8,27 +8,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## 2025-09-12
 
 ### Fixed
-- Phoenix integration now working correctly with proper OpenTelemetry instrumentation
-  - Fixed missing `registerInstrumentations()` call in phoenix.js
-  - Switched from `@opentelemetry/exporter-trace-otlp-http` to `@opentelemetry/exporter-trace-otlp-proto` for proper protocol support
-  - Added diagnostic logging with OpenTelemetry DiagConsoleLogger for troubleshooting
-  - Implemented graceful error handling and connection validation
-  - Added automatic span processor selection based on NODE_ENV (SimpleSpanProcessor for dev, BatchSpanProcessor for production)
-  - Fixed port configuration inconsistency (now consistently using port 6006)
-  - Added proper semantic conventions using SEMRESATTRS_PROJECT_NAME and ATTR_SERVICE_NAME
-  - Implemented proper shutdown handlers for clean process termination
+- Phoenix integration now properly traces OpenAI calls
+  - Resolved issue where N8N was bypassing instrumented client
+  - Fixed bot.js to use exported OpenAI client from phoenix.js
+  - Restored rate limit status bar functionality alongside Phoenix tracing
+  - Fixed async/await handler issue in Restify for test endpoint
   
 ### Changed
-- Updated .env.dist with comprehensive Phoenix configuration documentation
-- Simplified azure-openai-proxy.js to use instrumented OpenAI client
-- Replaced deprecated telemetry.js with direct phoenix.js initialization
-  
-### Removed
-- Removed deprecated telemetry.js wrapper
-- Removed old test files (test-phoenix-tracing.js, test-telemetry-standalone.js)
+- Updated README-PHOENIX.md with critical N8N configuration instructions
+  - N8N must use bot's proxy endpoint (http://bot-host:3978/openai/*) instead of direct Azure OpenAI
+  - Added troubleshooting steps for trace visibility
+- Modified bot.js to support both rate limit monitoring and Phoenix instrumentation
+  - Rate limit checks use direct API calls for header access
+  - Main OpenAI operations use instrumented client via proxy
   
 ### Added
-- New test-phoenix-integration.js for verifying Phoenix integration
+- Phoenix test endpoint at `/api/test-telemetry` for integration verification
 
 ## 2025-09-11
 

@@ -2,6 +2,37 @@
 
 This application includes integration with Arize Phoenix for LLM observability and monitoring using the OpenInference instrumentation approach.
 
+## 🚨 CRITICAL: N8N Workflow Configuration
+
+**For Phoenix tracing to work, your N8N workflow MUST use the bot's proxy endpoint instead of direct Azure OpenAI calls.**
+
+### Configure N8N to Use the Proxy
+
+1. **In your N8N workflow**, change the OpenAI API endpoint from:
+   ```
+   https://your-resource.openai.azure.com/openai/deployments/...
+   ```
+   To:
+   ```
+   http://your-bot-host:3978/openai/deployments/...
+   ```
+
+2. **Keep your API key** the same - the proxy will forward it to Azure
+
+3. **Example N8N HTTP Request node configuration**:
+   - **URL**: `http://localhost:3978/openai/deployments/gpt-4.1/chat/completions?api-version=2024-12-01-preview`
+   - **Method**: POST
+   - **Headers**: 
+     - `api-key`: Your Azure OpenAI API key
+     - `Content-Type`: application/json
+   - **Body**: Your OpenAI request payload
+
+### Why This Is Required
+
+- **Direct Azure OpenAI calls bypass Phoenix instrumentation**
+- The bot's proxy endpoint (`/openai/*`) uses the instrumented OpenAI client
+- This ensures all LLM interactions are traced and visible in Phoenix
+
 ## Features
 
 Phoenix provides comprehensive LLM observability with automatic instrumentation:
@@ -98,7 +129,8 @@ The new implementation uses the `@arizeai/openinference-instrumentation-openai` 
 ### Key Files
 
 - **phoenix.js**: Main Phoenix setup and OpenAI instrumentation with production-ready error handling
-- **azure-openai-proxy.js**: Simplified proxy that uses the instrumented OpenAI client
+- **azure-openai-proxy.js**: Proxy endpoint that uses the instrumented OpenAI client (used by N8N)
+- **bot.js**: Bot logic (rate limit checking disabled to ensure instrumentation)
 
 ## Telemetry Data Collected
 
@@ -155,11 +187,19 @@ Feedback and evaluation features are planned for future implementation.
 
 ### No traces appearing in Phoenix
 
-1. Check that Phoenix is running: `docker ps | grep phoenix`
-2. Verify environment variables are set correctly
-3. Check console logs for `[Phoenix]` messages
-4. Ensure `PHOENIX_ENABLED=true` in your `.env` file
-5. Try enabling debug mode with `PHOENIX_DEBUG=true`
+1. **MOST IMPORTANT**: Verify N8N is using the bot's proxy endpoint (`http://bot-host:3978/openai/*`) not direct Azure OpenAI
+2. Check that Phoenix is running: `docker ps | grep phoenix`
+3. Verify environment variables are set correctly
+4. Check console logs for `[Phoenix]` messages
+5. Ensure `PHOENIX_ENABLED=true` in your `.env` file
+6. Try enabling debug mode with `PHOENIX_DEBUG=true`
+7. Test the proxy directly:
+   ```bash
+   curl -X POST http://localhost:3978/openai/deployments/gpt-4.1/chat/completions?api-version=2024-12-01-preview \
+     -H "api-key: YOUR_AZURE_KEY" \
+     -H "Content-Type: application/json" \
+     -d '{"messages":[{"role":"user","content":"test"}],"max_tokens":10}'
+   ```
 
 ### Connection errors
 

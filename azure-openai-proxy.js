@@ -1,4 +1,5 @@
 const { getOpenAIClient } = require('./phoenix');
+const { trace, context } = require('@opentelemetry/api');
 
 // Azure OpenAI configuration from environment
 const DEFAULT_DEPLOYMENT = process.env.AZURE_OPENAI_DEPLOYMENT || 'gpt-4.1';
@@ -74,10 +75,24 @@ async function handleChatCompletions(req, res, openaiClient) {
             model: req.body.model || DEFAULT_DEPLOYMENT
         });
         
+        // Get the current active span and set input/output attributes for Phoenix display
+        const activeSpan = trace.getActiveSpan();
+        if (activeSpan) {
+            // Set input.value to just the user's message text for cleaner Phoenix UI display
+            activeSpan.setAttribute('input.value', userInput);
+            activeSpan.setAttribute('input.mime_type', 'text/plain');
+        }
+        
         // Extract assistant's output for Phoenix display
         let assistantOutput = '';
         if (response.choices && response.choices.length > 0 && response.choices[0].message) {
             assistantOutput = response.choices[0].message.content || '';
+        }
+        
+        // Set output.value to just the assistant's response text for cleaner Phoenix UI display
+        if (activeSpan && assistantOutput) {
+            activeSpan.setAttribute('output.value', assistantOutput);
+            activeSpan.setAttribute('output.mime_type', 'text/plain');
         }
         
         // Ensure n8n compatibility (content must exist)
