@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 2025-09-12
+
+### Fixed
+- Phoenix integration now working correctly with proper OpenTelemetry instrumentation
+  - Fixed missing `registerInstrumentations()` call in phoenix.js
+  - Switched from `@opentelemetry/exporter-trace-otlp-http` to `@opentelemetry/exporter-trace-otlp-proto` for proper protocol support
+  - Added diagnostic logging with OpenTelemetry DiagConsoleLogger for troubleshooting
+  - Implemented graceful error handling and connection validation
+  - Added automatic span processor selection based on NODE_ENV (SimpleSpanProcessor for dev, BatchSpanProcessor for production)
+  - Fixed port configuration inconsistency (now consistently using port 6006)
+  - Added proper semantic conventions using SEMRESATTRS_PROJECT_NAME and ATTR_SERVICE_NAME
+  - Implemented proper shutdown handlers for clean process termination
+  
+### Changed
+- Updated .env.dist with comprehensive Phoenix configuration documentation
+- Simplified azure-openai-proxy.js to use instrumented OpenAI client
+- Replaced deprecated telemetry.js with direct phoenix.js initialization
+  
+### Removed
+- Removed deprecated telemetry.js wrapper
+- Removed old test files (test-phoenix-tracing.js, test-telemetry-standalone.js)
+  
+### Added
+- New test-phoenix-integration.js for verifying Phoenix integration
+
 ## 2025-09-11
 
 ### Added
