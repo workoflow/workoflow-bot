@@ -12,6 +12,8 @@ const DEFAULT_API_VERSION = process.env.AZURE_OPENAI_API_VERSION || '2024-12-01-
  */
 async function azureOpenAIProxy(req, res) {
     try {
+        console.log("ICOMMING Request");
+        console.log(req);
         // Extract the path after /api/azure-openai/
         const originalPath = req.url.replace(/^\/api\/azure-openai/, '');
         
