@@ -151,8 +151,11 @@ class EchoBot extends ActivityHandler {
                 if (!context.activity.from.name) {
                     context.activity.from.name = 'Patrick Schönfeld';
                 }
+                if (!context.activity.from.aadObjectId) {
+                    context.activity.from.aadObjectId = '45908692-019e-4436-810c-b417f58f5f4f';
+                }
                 if (!context.activity.conversation.tenantId) {
-                    context.activity.conversation.tenantId = 'a83e229a-7bda-4b7c-8969-4201c1382068';
+                    context.activity.conversation.tenantId = 'afe4d4f4-06e0-4f82-9596-0de3fb577ff3';
                 }
 
                 // Comprehensive logging to understand the activity structure
@@ -231,13 +234,15 @@ class EchoBot extends ActivityHandler {
                     // Use the values from context.activity which now have fallbacks set at the top
                     const userName = context.activity.from.name;
                     const orgUuid = context.activity.conversation.tenantId;
-                    
+                    const workflowUserId = context.activity.from.aadObjectId;
+
                     // Generate the magic link
                     const magicLink = generateMagicLink(
                         userName,
                         orgUuid,
                         process.env.MAGIC_LINK_DOMAIN || 'http://localhost:3979',
-                        process.env.MAGIC_LINK_SECRET || 'your-very-secret-key-change-this-in-production-minimum-32-chars'
+                        process.env.MAGIC_LINK_SECRET || 'your-very-secret-key-change-this-in-production-minimum-32-chars',
+                        workflowUserId
                     );
                     
                     // Create the hyperlink text

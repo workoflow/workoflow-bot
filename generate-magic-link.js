@@ -9,18 +9,20 @@ const jwt = require('jsonwebtoken');
 
 /**
  * Generate a magic link for user authentication
- * 
+ *
  * @param {string} name - User's name
  * @param {string} orgUuid - Organization UUID from Workoflow
  * @param {string} baseUrl - Base URL of your Workoflow instance (e.g., 'https://yourdomain.com')
  * @param {string} secret - The MAGIC_LINK_SECRET from your .env file
+ * @param {string} workflowUserId - The user's AAD Object ID for workflow identification (optional, defaults to dev value)
  * @returns {string} - The complete magic link URL
  */
-function generateMagicLink(name, orgUuid, baseUrl, secret) {
+function generateMagicLink(name, orgUuid, baseUrl, secret, workflowUserId) {
     // Create the JWT payload
     const payload = {
         name: name,
         org_uuid: orgUuid,
+        workflow_user_id: workflowUserId, // Fallback for development
         type: 'magic_link',
         iat: Math.floor(Date.now() / 1000),
         exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60) // 24 hours expiration
@@ -40,6 +42,7 @@ function exampleUsage() {
     // These values would come from your Teams bot context
     const userEmail = 'user@example.com';
     const organizationUuid = '123e4567-e89b-12d3-a456-426614174000'; // From Workoflow organisation
+    const userAadObjectId = ''; // From context.activity.from.aadObjectId (empty in development)
     
     // Your Workoflow instance URL
     const workoflowUrl = 'http://localhost:3979'; // Change to your production URL
@@ -53,7 +56,8 @@ function exampleUsage() {
         userEmail,
         organizationUuid,
         workoflowUrl,
-        magicLinkSecret
+        magicLinkSecret,
+        userAadObjectId
     );
     
     console.log('Generated magic link:', magicLink);
@@ -104,7 +108,8 @@ if (require.main === module) {
     console.log('1. The MAGIC_LINK_SECRET must be the same in both your Teams bot and Workoflow .env file');
     console.log('2. Store the secret securely in environment variables, never in code');
     console.log('3. The organization UUID comes from the Workoflow organisation table');
-    console.log('4. Links expire after 24 hours by default');
-    console.log('5. Users will be automatically created if they don\'t exist');
-    console.log('6. Users will be assigned ROLE_MEMBER role');
+    console.log('4. The workflow_user_id is mapped from AAD Object ID (fallback: 45908692-019e-4436-810c-b417f58f5f4f for dev)');
+    console.log('5. Links expire after 24 hours by default');
+    console.log('6. Users will be automatically created if they don\'t exist');
+    console.log('7. Users will be assigned ROLE_MEMBER role');
 }

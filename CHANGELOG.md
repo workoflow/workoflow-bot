@@ -76,3 +76,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - JWT tokens for magic links use HS256 algorithm with configurable secret
 - Magic link secret stored in environment variables
 - Azure OpenAI API key stored in environment variables
+## 2025-09-18
+
+### Changed
+- Enhanced magic link generation with workflow user ID support
+  - Added AAD Object ID mapping for user identification  
+  - Updated tenant ID for development environment
+  - Added fallback values for missing user context properties
+  - Improved JWT payload structure with workflow_user_id field
+
+### Technical
+- Modified bot.js to extract and pass AAD Object ID to magic link generator
+- Updated generateMagicLink function signature to accept workflowUserId parameter
