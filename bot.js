@@ -1,9 +1,11 @@
-const { ActivityHandler, MessageFactory } = require('botbuilder');
+const { ActivityHandler, MessageFactory, CardFactory } = require('botbuilder');
 const axios = require('axios');
 const { generateMagicLink } = require('./generate-magic-link');
 const { getOpenAIClient } = require('./phoenix');
+const { shouldAskForFeedback, markFeedbackGiven, markUserInteraction } = require('./feedback-tracker');
 
 const N8N_WEBHOOK_URL = process.env.WORKOFLOW_N8N_WEBHOOK_URL || 'https://workflows.vcec.cloud/webhook/016d8b95-d5a5-4ac6-acb5-359a547f642f';
+const FEEDBACK_WEBHOOK_URL = process.env.WORKOFLOW_FEEDBACK_WEBHOOK_URL || 'https://workflows-stage.vcec.cloud/webhook/a887e442-2c85-4193-b127-24408eaf8b11';
 const N8N_BASIC_AUTH_USERNAME = process.env.N8N_BASIC_AUTH_USERNAME;
 const N8N_BASIC_AUTH_PASSWORD = process.env.N8N_BASIC_AUTH_PASSWORD;
 
@@ -77,6 +79,62 @@ async function getAzureOpenAIStatus() {
 
 // Note: Main OpenAI calls should go through the proxy endpoint (/openai/*) for Phoenix tracing
 // N8N workflow must be configured to use http://bot-host:3978/openai/* instead of direct Azure OpenAI
+
+// Function to create feedback adaptive card
+function createFeedbackCard() {
+    return CardFactory.adaptiveCard({
+        type: 'AdaptiveCard',
+        body: [
+            {
+                type: 'TextBlock',
+                text: 'How is Workoflow doing this session? (optional)',
+                size: 'Medium',
+                weight: 'Bolder',
+                wrap: true
+            }
+        ],
+        actions: [
+            {
+                type: 'Action.Submit',
+                title: '😞 Bad',
+                data: {
+                    action: 'feedback',
+                    rating: 1,
+                    ratingText: 'Bad'
+                }
+            },
+            {
+                type: 'Action.Submit',
+                title: '😐 Fine',
+                data: {
+                    action: 'feedback',
+                    rating: 2,
+                    ratingText: 'Fine'
+                }
+            },
+            {
+                type: 'Action.Submit',
+                title: '😊 Good',
+                data: {
+                    action: 'feedback',
+                    rating: 3,
+                    ratingText: 'Good'
+                }
+            },
+            {
+                type: 'Action.Submit',
+                title: 'Dismiss',
+                data: {
+                    action: 'feedback',
+                    rating: 0,
+                    ratingText: 'Dismissed'
+                }
+            }
+        ],
+        $schema: 'http://adaptivecards.io/schemas/adaptive-card.json',
+        version: '1.3'
+    });
+}
 
 class EchoBot extends ActivityHandler {
     constructor() {
@@ -156,6 +214,49 @@ class EchoBot extends ActivityHandler {
                 }
                 if (!context.activity.conversation.tenantId) {
                     context.activity.conversation.tenantId = 'afe4d4f4-06e0-4f82-9596-0de3fb577ff3';
+                }
+
+                // Handle adaptive card submissions (feedback)
+                if (context.activity.value && context.activity.value.action === 'feedback') {
+                    const feedbackData = context.activity.value;
+                    const userId = context.activity.from.aadObjectId;
+
+                    // Mark feedback as given
+                    markFeedbackGiven(userId, feedbackData.rating);
+
+                    // Send feedback to webhook
+                    try {
+                        const feedbackPayload = {
+                            userId: userId,
+                            userName: context.activity.from.name,
+                            tenantId: context.activity.conversation.tenantId,
+                            timestamp: new Date().toISOString(),
+                            feedback: {
+                                rating: feedbackData.rating,
+                                ratingText: feedbackData.ratingText
+                            }
+                        };
+
+                        console.log('Sending feedback to webhook:', feedbackPayload);
+
+                        const feedbackResponse = await axios.post(FEEDBACK_WEBHOOK_URL, feedbackPayload, {
+                            headers: {
+                                'Content-Type': 'application/json'
+                            }
+                        });
+
+                        console.log('Feedback webhook response:', feedbackResponse.data);
+
+                        // Send thank you message
+                        if (feedbackData.rating > 0) {
+                            await context.sendActivity(MessageFactory.text('Thank you for your feedback! 🙏'));
+                        }
+                    } catch (error) {
+                        console.error('Error sending feedback to webhook:', error.message);
+                    }
+
+                    await next();
+                    return;
                 }
 
                 // Comprehensive logging to understand the activity structure
@@ -327,6 +428,19 @@ class EchoBot extends ActivityHandler {
                 } else {
                     // Send just the text message
                     await context.sendActivity(MessageFactory.text(n8nReplyText, n8nReplyText));
+                }
+
+                // Check if we should ask for feedback (first interaction of the day)
+                const userId = context.activity.from.aadObjectId;
+                if (shouldAskForFeedback(userId)) {
+                    // Mark that we're tracking this user now
+                    markUserInteraction(userId);
+
+                    // Send feedback card
+                    const feedbackCard = createFeedbackCard();
+                    await context.sendActivity({ attachments: [feedbackCard] });
+
+                    console.log(`Feedback card sent to user: ${context.activity.from.name} (${userId})`);
                 }
 
             } catch (error) {

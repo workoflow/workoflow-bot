@@ -78,9 +78,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Azure OpenAI API key stored in environment variables
 ## 2025-09-18
 
+### Added
+- User feedback system with adaptive cards
+  - Interactive feedback card with Bad/Fine/Good rating options
+  - Daily feedback prompt on first interaction
+  - Feedback submission to dedicated webhook endpoint
+  - Feedback tracking module to manage user interaction state
+
 ### Changed
 - Enhanced magic link generation with workflow user ID support
-  - Added AAD Object ID mapping for user identification  
+  - Added AAD Object ID mapping for user identification
   - Updated tenant ID for development environment
   - Added fallback values for missing user context properties
   - Improved JWT payload structure with workflow_user_id field
@@ -88,3 +95,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Technical
 - Modified bot.js to extract and pass AAD Object ID to magic link generator
 - Updated generateMagicLink function signature to accept workflowUserId parameter
+- Added feedback-tracker module dependency for session management
+- Integrated CardFactory from botbuilder for adaptive card creation
