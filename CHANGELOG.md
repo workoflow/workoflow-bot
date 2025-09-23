@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 2025-09-23
 
+### Fixed (Critical)
+- Fixed PM2 cluster mode causing feedback to appear multiple times
+  - Changed Dockerfile from `-i max` to `-i 1` to run single process
+  - Multiple PM2 workers were causing each request to hit different process with separate memory
+  - This was the root cause of feedback appearing on every message
+
+## 2025-09-23
+
 ### Added
 - Environment variable `FEEDBACK_ENABLED` to control feedback collection
   - Set to `false` to disable feedback prompts entirely

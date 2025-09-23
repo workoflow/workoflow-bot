@@ -1,6 +1,9 @@
 // In-memory storage for tracking daily feedback
 const feedbackTracker = {};
 
+// Log initialization to detect module reloading
+console.log(`[FEEDBACK DEBUG] feedback-tracker.js initialized at ${new Date().toISOString()} - PID: ${process.pid}`);
+
 // Helper function to get today's date in YYYY-MM-DD format
 function getTodayDate() {
     const today = new Date();
