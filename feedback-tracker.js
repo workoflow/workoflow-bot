@@ -39,6 +39,7 @@ function markFeedbackGiven(userId, rating = null) {
     feedbackTracker[userId] = {
         date: today,
         feedbackGiven: true,
+        feedbackPrompted: true, // Preserve that feedback was prompted
         rating: rating,
         timestamp: new Date().toISOString()
     };
