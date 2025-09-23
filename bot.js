@@ -2,7 +2,7 @@ const { ActivityHandler, MessageFactory, CardFactory } = require('botbuilder');
 const axios = require('axios');
 const { generateMagicLink } = require('./generate-magic-link');
 const { getOpenAIClient } = require('./phoenix');
-const { shouldAskForFeedback, markFeedbackGiven, markUserInteraction } = require('./feedback-tracker');
+const { shouldAskForFeedback, markFeedbackGiven, markUserInteraction, markFeedbackPrompted } = require('./feedback-tracker');
 
 const N8N_WEBHOOK_URL = process.env.WORKOFLOW_N8N_WEBHOOK_URL || 'https://workflows.vcec.cloud/webhook/016d8b95-d5a5-4ac6-acb5-359a547f642f';
 const FEEDBACK_WEBHOOK_URL = process.env.WORKOFLOW_FEEDBACK_WEBHOOK_URL || 'https://workflows-stage.vcec.cloud/webhook/a887e442-2c85-4193-b127-24408eaf8b11';
@@ -433,8 +433,8 @@ class EchoBot extends ActivityHandler {
                 // Check if we should ask for feedback (first interaction of the day)
                 const userId = context.activity.from.aadObjectId;
                 if (shouldAskForFeedback(userId)) {
-                    // Mark that we're tracking this user now
-                    markUserInteraction(userId);
+                    // Mark that feedback has been prompted to this user
+                    markFeedbackPrompted(userId);
 
                     // Send feedback card
                     const feedbackCard = createFeedbackCard();

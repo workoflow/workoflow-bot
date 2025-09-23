@@ -27,8 +27,8 @@ function shouldAskForFeedback(userId) {
         return true;
     }
 
-    // If record exists for today and feedback was given, don't ask
-    return !userRecord.feedbackGiven;
+    // If feedback was already prompted or given today, don't ask again
+    return !userRecord.feedbackPrompted && !userRecord.feedbackGiven;
 }
 
 // Mark that feedback was given (or dismissed) by a user
@@ -55,8 +55,30 @@ function markUserInteraction(userId) {
         feedbackTracker[userId] = {
             date: today,
             feedbackGiven: false,
+            feedbackPrompted: false,
             firstInteraction: new Date().toISOString()
         };
+    }
+}
+
+// Mark that feedback has been prompted to the user
+function markFeedbackPrompted(userId) {
+    if (!userId) return;
+
+    const today = getTodayDate();
+
+    // Initialize record if it doesn't exist
+    if (!feedbackTracker[userId] || feedbackTracker[userId].date !== today) {
+        feedbackTracker[userId] = {
+            date: today,
+            feedbackGiven: false,
+            feedbackPrompted: true,
+            promptedAt: new Date().toISOString()
+        };
+    } else {
+        // Update existing record
+        feedbackTracker[userId].feedbackPrompted = true;
+        feedbackTracker[userId].promptedAt = new Date().toISOString();
     }
 }
 
@@ -87,6 +109,7 @@ module.exports = {
     shouldAskForFeedback,
     markFeedbackGiven,
     markUserInteraction,
+    markFeedbackPrompted,
     getFeedbackStatus,
     cleanupOldEntries
 };
