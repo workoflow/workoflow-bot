@@ -432,20 +432,26 @@ class EchoBot extends ActivityHandler {
                     await context.sendActivity(MessageFactory.text(n8nReplyText, n8nReplyText));
                 }
 
-                // Check if we should ask for feedback (first interaction of the day)
-                // Use fallback if aadObjectId is not available (happens in some Teams contexts)
-                const userId = context.activity.from.aadObjectId || context.activity.from.id || 'default-user';
-                console.log(`[FEEDBACK DEBUG] Checking feedback for userId: ${userId}, aadObjectId: ${context.activity.from.aadObjectId}, from.id: ${context.activity.from.id}`);
+                // Check if feedback is enabled and we should ask for feedback (first interaction of the day)
+                const feedbackEnabled = process.env.FEEDBACK_ENABLED !== 'false'; // Default to true if not set
 
-                if (shouldAskForFeedback(userId)) {
-                    // Mark that feedback has been prompted to this user
-                    markFeedbackPrompted(userId);
+                if (feedbackEnabled) {
+                    // Use fallback if aadObjectId is not available (happens in some Teams contexts)
+                    const userId = context.activity.from.aadObjectId || context.activity.from.id || 'default-user';
+                    console.log(`[FEEDBACK DEBUG] Checking feedback for userId: ${userId}, aadObjectId: ${context.activity.from.aadObjectId}, from.id: ${context.activity.from.id}`);
 
-                    // Send feedback card
-                    const feedbackCard = createFeedbackCard();
-                    await context.sendActivity({ attachments: [feedbackCard] });
+                    if (shouldAskForFeedback(userId)) {
+                        // Mark that feedback has been prompted to this user
+                        markFeedbackPrompted(userId);
 
-                    console.log(`[FEEDBACK DEBUG] Feedback card sent to user: ${context.activity.from.name} (${userId})`);
+                        // Send feedback card
+                        const feedbackCard = createFeedbackCard();
+                        await context.sendActivity({ attachments: [feedbackCard] });
+
+                        console.log(`[FEEDBACK DEBUG] Feedback card sent to user: ${context.activity.from.name} (${userId})`);
+                    }
+                } else {
+                    console.log(`[FEEDBACK DEBUG] Feedback collection is disabled via FEEDBACK_ENABLED env variable`);
                 }
 
             } catch (error) {

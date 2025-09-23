@@ -7,12 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 2025-09-23
 
+### Added
+- Environment variable `FEEDBACK_ENABLED` to control feedback collection
+  - Set to `false` to disable feedback prompts entirely
+  - Defaults to `true` if not set (feedback enabled by default)
+
 ### Fixed
 - Fixed feedback prompt appearing after every response instead of once per day
   - Added `feedbackPrompted` field to track when feedback card has been shown
   - Updated `shouldAskForFeedback()` to check both `feedbackPrompted` and `feedbackGiven` flags
   - Added `markFeedbackPrompted()` function to properly track feedback card display
   - Changed bot.js to call `markFeedbackPrompted()` instead of `markUserInteraction()` when showing feedback
+  - Added debug logging to track feedback state and user IDs
+  - Fixed userId consistency issues between feedback prompt and submission
 
 ## 2025-09-12
 
