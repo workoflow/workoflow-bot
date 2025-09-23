@@ -219,7 +219,9 @@ class EchoBot extends ActivityHandler {
                 // Handle adaptive card submissions (feedback)
                 if (context.activity.value && context.activity.value.action === 'feedback') {
                     const feedbackData = context.activity.value;
-                    const userId = context.activity.from.aadObjectId;
+                    // Use same fallback logic as feedback prompt check for consistency
+                    const userId = context.activity.from.aadObjectId || context.activity.from.id || 'default-user';
+                    console.log(`[FEEDBACK DEBUG] Feedback submission from userId: ${userId}`);
 
                     // Mark feedback as given
                     markFeedbackGiven(userId, feedbackData.rating);
@@ -431,7 +433,10 @@ class EchoBot extends ActivityHandler {
                 }
 
                 // Check if we should ask for feedback (first interaction of the day)
-                const userId = context.activity.from.aadObjectId;
+                // Use fallback if aadObjectId is not available (happens in some Teams contexts)
+                const userId = context.activity.from.aadObjectId || context.activity.from.id || 'default-user';
+                console.log(`[FEEDBACK DEBUG] Checking feedback for userId: ${userId}, aadObjectId: ${context.activity.from.aadObjectId}, from.id: ${context.activity.from.id}`);
+
                 if (shouldAskForFeedback(userId)) {
                     // Mark that feedback has been prompted to this user
                     markFeedbackPrompted(userId);
@@ -440,7 +445,7 @@ class EchoBot extends ActivityHandler {
                     const feedbackCard = createFeedbackCard();
                     await context.sendActivity({ attachments: [feedbackCard] });
 
-                    console.log(`Feedback card sent to user: ${context.activity.from.name} (${userId})`);
+                    console.log(`[FEEDBACK DEBUG] Feedback card sent to user: ${context.activity.from.name} (${userId})`);
                 }
 
             } catch (error) {
