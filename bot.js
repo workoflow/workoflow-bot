@@ -460,12 +460,41 @@ class EchoBot extends ActivityHandler {
                     console.error('Response data:', error.response.data);
                     console.error('Response status:', error.response.status);
                 }
-                
+
                 // Check if the error is about file attachments
                 if (error.message && error.message.includes('File attachments')) {
                     await context.sendActivity(MessageFactory.text('I received a response but cannot send file attachments directly. Please let me know if you need the information in a different format.'));
                 } else {
-                    await context.sendActivity(MessageFactory.text('There was an error communicating with the AI agent.'));
+                    // Determine the specific error type based on error details
+                    let errorMessage = 'There was an error communicating with the AI agent.\n\n';
+
+                    // Check for timeout errors (axios timeout or proxy timeout)
+                    if (error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT' ||
+                        (error.response && (error.response.status === 504 || error.response.status === 408))) {
+                        errorMessage += '⏱️ **Request Timeout**: Your request took more than 60 seconds and was automatically cancelled.\n';
+                        errorMessage += 'We are working on improving this limitation.\n\n';
+                    }
+
+                    // Check for rate limit errors
+                    if (error.response && error.response.status === 429) {
+                        errorMessage += '⚠️ **Rate Limit**: The allowed token limit per minute has been reached (check status line value RLT).\n';
+                        errorMessage += 'Please wait a moment before trying again.\n\n';
+                    }
+
+                    // Check for workflow/technical errors
+                    if (error.response && error.response.status >= 500) {
+                        errorMessage += '🔧 **Technical Issue**: The workflow behind your request may have failed.\n';
+                        errorMessage += 'This could be a temporary issue with the backend services.\n\n';
+                    }
+
+                    // Add general troubleshooting message
+                    errorMessage += 'Possible causes:\n';
+                    errorMessage += '• Requests exceeding 60 seconds are cancelled due to proxy timeout\n';
+                    errorMessage += '• Rate limit reached (too many requests per minute)\n';
+                    errorMessage += '• Technical issue with the workflow processing\n\n';
+                    errorMessage += 'Please try again with a simpler request or contact support if the issue persists.';
+
+                    await context.sendActivity(MessageFactory.text(errorMessage));
                 }
             }
 
