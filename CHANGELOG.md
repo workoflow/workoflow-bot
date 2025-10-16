@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 2025-10-16
+
+### Fixed
+- Fixed n8n response parsing for nested JSON structure
+  - N8n webhook now returns `output` field containing stringified JSON
+  - Updated parsing logic to handle the nested JSON structure properly
+  - Bot now correctly extracts message and attachment URLs from the parsed response
+  - Removed backward compatibility for old array-based response format
+
+### Added
+- New deployment configuration for staging and production environments
+  - Added `deploy/deploy-stage.zip` for staging deployments
+  - Created `deploy/manifest.prod.json` for production Teams app configuration
+  - Added `stop` script in package.json to gracefully terminate process on port 3978
+
+### Changed
+- Updated Teams app manifest configuration
+  - Changed app ID from `224ba22b-cdfb-4fca-9e3b-f5b3051c73b4` to `9bc8ed66-8b19-4afc-bcac-29dca5e41d10`
+  - Updated bot ID to `9aab910c-cfab-4366-b2c0-bbb364e1b1bc`
+  - Removed authorization permissions section from manifest
+  - Bumped manifest version from 1.0.3 to 1.0.4
+
 ## 2025-09-23
 
 ### Fixed (Critical)

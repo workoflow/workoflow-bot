@@ -1,75 +1,65 @@
 {
-  "$schema": "https://developer.microsoft.com/json-schemas/teams/v1.19/MicrosoftTeams.schema.json",
-  "manifestVersion": "1.19",
-  "version": "1.0.3",
-  "id": "224ba22b-cdfb-4fca-9e3b-f5b3051c73b3",
-  "developer": {
-    "name": "Valantic CEC Deutschland GmbH",
-    "websiteUrl": "https://www.valantic.com/de/cx/",
-    "privacyUrl": "https://www.valantic.com/de/datenschutzerklaerung",
-    "termsOfUseUrl": "https://www.valantic.com/de/impressum-und-rechtshinweise"
-  },
-  "icons": {
-    "outline": "outline.png",
-    "color": "color.jpg"
-  },
-  "name": {
-    "short": "Workoflow Bot",
-    "full": "Efficiency is yours."
-  },
-  "description": {
-    "short": "Efficiency is yours.",
-    "full": "Company automations made easy and accessible. Identify, automate, publish, repeat. (powered by n8n: https://workflows.vcec.cloud/)."
-  },
-  "accentColor": "#ff4b4b",
-  "bots": [
-    {
-      "botId": "ec40bbb0-909e-4b46-908f-ce9b37735e5f",
-      "scopes": [
-        "personal",
-        "groupChat",
-        "team"
-      ],
-      "isNotificationOnly": false,
-      "supportsCalling": false,
-      "supportsVideo": false,
-      "supportsFiles": true,
-      "commandLists": [
+    "$schema": "https://developer.microsoft.com/en-us/json-schemas/teams/v1.19/MicrosoftTeams.schema.json",
+    "manifestVersion": "1.19",
+    "version": "1.0.4",
+    "id": "9bc8ed66-8b19-4afc-bcac-29dca5e41d10",
+    "developer": {
+        "name": "Valantic CEC Deutschland GmbH",
+        "websiteUrl": "https://www.valantic.com/de/cx/",
+        "privacyUrl": "https://www.valantic.com/de/datenschutzerklaerung",
+        "termsOfUseUrl": "https://www.valantic.com/de/impressum-und-rechtshinweise"
+    },
+    "icons": {
+        "outline": "outline.png",
+        "color": "color.jpg"
+    },
+    "name": {
+        "short": "Workoflow Bot",
+        "full": "Efficiency is yours."
+    },
+    "description": {
+        "short": "Efficiency is yours.",
+        "full": "Company automations made easy and accessible. Identify, automate, publish, repeat. (powered by n8n: https://workflows.vcec.cloud/)."
+    },
+    "accentColor": "#ff4b4b",
+    "bots": [
         {
-          "scopes": [
-            "personal",
-            "groupChat",
-            "team"
-          ],
-          "commands": [
-            {
-              "title": "Which tools you have connected?",
-              "description": "Tell me about the internal tools you have access for."
-            },
-            {
-              "title": "What are missing in Ticket XY-9?",
-              "description": "Use the Bot to ask ticket related questions."
-            }
-          ]
+            "botId": "9aab910c-cfab-4366-b2c0-bbb364e1b1bc",
+            "scopes": [
+                "personal",
+                "groupChat",
+                "team"
+            ],
+            "isNotificationOnly": false,
+            "supportsCalling": false,
+            "supportsVideo": false,
+            "supportsFiles": true,
+            "commandLists": [
+                {
+                    "scopes": [
+                        "personal",
+                        "groupChat",
+                        "team"
+                    ],
+                    "commands": [
+                        {
+                            "title": "Which tools you have connected?",
+                            "description": "Tell me about the internal tools you have access for."
+                        },
+                        {
+                            "title": "What are missing in Ticket XY-9?",
+                            "description": "Use the Bot to ask ticket related questions."
+                        }
+                    ]
+                }
+            ]
         }
-      ]
-    }
-  ],
-  "permissions": [
-    "identity",
-    "messageTeamMembers"
-  ],
-  "authorization": {
-    "permissions": {
-      "resourceSpecific": [
-        {
-          "name": "ChatMessageReadReceipt.Read.Chat",
-          "type": "Application"
-        }
-      ]
-    }
-  },
-  "validDomains": [
-    "*.ngrok-free.app"
-  ]
+    ],
+    "permissions": [
+        "identity",
+        "messageTeamMembers"
+    ],
+    "validDomains": [
+        "*.ngrok-free.app"
+    ]
 }

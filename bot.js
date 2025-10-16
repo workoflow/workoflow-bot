@@ -410,15 +410,25 @@ class EchoBot extends ActivityHandler {
                 let n8nReplyText = 'Sorry, I could not get a response from the agent.';
                 let attachmentUrl = null;
 
-                // Handle the new response structure
-                if (n8nResponse.data && n8nResponse.data.output && Array.isArray(n8nResponse.data.output) && n8nResponse.data.output.length > 0) {
-                    const outputItem = n8nResponse.data.output[0];
-                    if (outputItem.output) {
-                        n8nReplyText = outputItem.output;
-                    }
-                    // Check for optional attachment
-                    if (outputItem.attachment && outputItem.attachment.url) {
-                        attachmentUrl = outputItem.attachment.url;
+                // Handle the response structure - n8n returns output as stringified JSON
+                if (n8nResponse.data && n8nResponse.data.output) {
+                    try {
+                        // Parse the stringified JSON
+                        const parsedOutput = JSON.parse(n8nResponse.data.output);
+
+                        // Extract the actual message
+                        if (parsedOutput.output) {
+                            n8nReplyText = parsedOutput.output;
+                        }
+
+                        // Check for attachment URL
+                        if (parsedOutput.attachment) {
+                            attachmentUrl = parsedOutput.attachment;
+                        }
+                    } catch (parseError) {
+                        console.error('Error parsing n8n response JSON:', parseError);
+                        // Fallback to treating the output as plain text if it's not valid JSON
+                        n8nReplyText = n8nResponse.data.output;
                     }
                 }
 
