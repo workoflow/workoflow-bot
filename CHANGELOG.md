@@ -43,6 +43,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - New dependency: `botframework-connector@^4.23.3` for Teams-specific APIs
 - Comprehensive error handling for API failures, timeouts, and authentication issues
 
+### Security
+- Magic link generation restricted to personal chats only
+  - Added `conversationType` check before generating magic links
+  - Magic links are now only generated when `conversationType === 'personal'`
+  - Group chats and channels no longer receive magic links
+  - Prevents exposure of personal integration links in shared conversations
+  - Logs indication when magic link generation is skipped for non-personal conversations
+
 ### Deprecated
 - Local JWT generation in `generate-magic-link.js` (kept for backward compatibility)
 - `MAGIC_LINK_SECRET` environment variable (no longer needed with API approach)
