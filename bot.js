@@ -1,6 +1,6 @@
-const { ActivityHandler, MessageFactory, CardFactory } = require('botbuilder');
+const { ActivityHandler, MessageFactory, CardFactory, TeamsInfo } = require('botbuilder');
+const { ConnectorClient, MicrosoftAppCredentials } = require('botframework-connector');
 const axios = require('axios');
-const { generateMagicLink } = require('./generate-magic-link');
 const { getOpenAIClient } = require('./phoenix');
 const { shouldAskForFeedback, markFeedbackGiven, markUserInteraction, markFeedbackPrompted } = require('./feedback-tracker');
 
@@ -79,6 +79,126 @@ async function getAzureOpenAIStatus() {
 
 // Note: Main OpenAI calls should go through the proxy endpoint (/openai/*) for Phoenix tracing
 // N8N workflow must be configured to use http://bot-host:3978/openai/* instead of direct Azure OpenAI
+
+// Helper function to detect if this is a thread reply
+function isThreadReply(activity) {
+    // Check if there's a replyToId field (direct indicator)
+    if (activity.replyToId) {
+        console.log('[THREAD DETECTION] Found replyToId:', activity.replyToId);
+        return true;
+    }
+
+    // Check if there's an HTML attachment with a Reply schema type
+    if (activity.attachments && activity.attachments.length > 0) {
+        const hasReplySchema = activity.attachments.some(att =>
+            att.contentType === 'text/html' &&
+            att.content &&
+            att.content.includes('itemtype="http://schema.skype.com/Reply"')
+        );
+
+        if (hasReplySchema) {
+            console.log('[THREAD DETECTION] Found Reply schema in HTML attachment');
+            return true;
+        }
+    }
+
+    return false;
+}
+
+// Helper function to extract the thread message ID from the activity
+function extractThreadMessageId(activity) {
+    // First, try to get from replyToId
+    if (activity.replyToId) {
+        return activity.replyToId;
+    }
+
+    // Try to extract from HTML attachment
+    if (activity.attachments && activity.attachments.length > 0) {
+        for (const attachment of activity.attachments) {
+            if (attachment.contentType === 'text/html' && attachment.content) {
+                // Look for itemid in the blockquote
+                const itemIdMatch = attachment.content.match(/itemid="([^"]+)"/);
+                if (itemIdMatch && itemIdMatch[1]) {
+                    console.log('[THREAD EXTRACTION] Found itemid in HTML:', itemIdMatch[1]);
+                    return itemIdMatch[1];
+                }
+            }
+        }
+    }
+
+    return null;
+}
+
+// Function to fetch the complete thread message using Bot Framework API
+async function fetchCompleteThreadMessage(context, messageId) {
+    console.log(`[THREAD FETCH] Message ID: ${messageId}`);
+    console.log('[THREAD FETCH] Note: Teams does not allow bots to fetch historical messages');
+
+    // Teams/Bot Framework limitation: Bots cannot access conversation history
+    // The original message is only available as a truncated preview in the HTML attachment
+    return {
+        id: messageId,
+        available: false,
+        reason: 'Teams API restriction - bots cannot access conversation history',
+        note: 'Only the HTML preview from the current activity is available'
+    };
+}
+
+// Function to fetch extended user information
+async function fetchExtendedUserInfo(context, userId) {
+    try {
+        console.log(`[USER FETCH] Fetching extended info for user: ${userId}`);
+
+        // Get detailed user information using TeamsInfo
+        const member = await TeamsInfo.getMember(context, userId);
+
+        // Try to get additional team context if in a team
+        let teamContext = null;
+        try {
+            const teamDetails = await TeamsInfo.getTeamDetails(context);
+            if (teamDetails) {
+                teamContext = {
+                    teamId: teamDetails.id,
+                    teamName: teamDetails.name,
+                    teamDescription: teamDetails.description
+                };
+            }
+        } catch (teamError) {
+            // Not in a team context, that's okay
+            console.log('[USER FETCH] Not in team context or unable to fetch team details');
+        }
+
+        // Get meeting info if in a meeting
+        let meetingContext = null;
+        try {
+            const meetingInfo = await TeamsInfo.getMeetingInfo(context);
+            if (meetingInfo) {
+                meetingContext = {
+                    meetingId: meetingInfo.details?.id,
+                    meetingTitle: meetingInfo.details?.title,
+                    meetingType: meetingInfo.details?.type
+                };
+            }
+        } catch (meetingError) {
+            // Not in a meeting context, that's okay
+            console.log('[USER FETCH] Not in meeting context or unable to fetch meeting details');
+        }
+
+        const extendedInfo = {
+            ...member,
+            teamContext,
+            meetingContext,
+            fetchedAt: new Date().toISOString()
+        };
+
+        console.log('[USER FETCH] Successfully fetched extended user info');
+        return extendedInfo;
+
+    } catch (error) {
+        console.error('[USER FETCH] Error fetching extended user info:', error.message);
+        return null;
+    }
+}
 
 // Function to create feedback adaptive card
 function createFeedbackCard() {
@@ -331,7 +451,7 @@ class EchoBot extends ActivityHandler {
                 const randomLoadingMessage = this.loadingMessages[Math.floor(Math.random() * this.loadingMessages.length)];
                 const randomTip = this.tips[Math.floor(Math.random() * this.tips.length)];
                 
-                // Generate magic link for the user
+                // Generate magic link for the user using the new API approach
                 let magicLinkText = '';
                 try {
                     // Use the values from context.activity which now have fallbacks set at the top
@@ -339,19 +459,61 @@ class EchoBot extends ActivityHandler {
                     const orgUuid = context.activity.conversation.tenantId;
                     const workflowUserId = context.activity.from.aadObjectId;
 
-                    // Generate the magic link
-                    const magicLink = generateMagicLink(
-                        userName,
-                        orgUuid,
-                        process.env.MAGIC_LINK_DOMAIN || 'http://localhost:3979',
-                        process.env.MAGIC_LINK_SECRET || 'your-very-secret-key-change-this-in-production-minimum-32-chars',
-                        workflowUserId
-                    );
-                    
-                    // Create the hyperlink text
-                    magicLinkText = `\n\n[Manage your Integrations](${magicLink})`;
+                    // Extract channel information from the conversation context
+                    const channelId = context.activity.conversation.id;
+                    const channelName = context.activity.conversation.name ||
+                                      context.activity.channelData?.channel?.name ||
+                                      `Channel-${channelId.substring(0, 8)}`;
+
+                    // Check if API credentials are configured
+                    if (!process.env.WORKOFLOW_API_USER || !process.env.WORKOFLOW_API_PASSWORD) {
+                        console.log('[Magic Link] API credentials not configured, skipping magic link generation');
+                        console.log('[Magic Link] Please set WORKOFLOW_API_USER and WORKOFLOW_API_PASSWORD in .env');
+                    } else {
+                        // Import the new function directly
+                        const { registerUserAndGetMagicLink } = require('./register-api');
+
+                        // Prepare configuration with channel information
+                        const config = {
+                            baseUrl: process.env.MAGIC_LINK_DOMAIN || 'http://localhost:3979',
+                            apiUser: process.env.WORKOFLOW_API_USER,
+                            apiPassword: process.env.WORKOFLOW_API_PASSWORD,
+                            channelUuid: `channel-${channelId}`, // Use conversation ID as channel UUID
+                            channelName: channelName
+                        };
+
+                        console.log('[Magic Link] Registering user with channel:', {
+                            userName,
+                            orgUuid,
+                            workflowUserId,
+                            channelUuid: config.channelUuid,
+                            channelName: config.channelName
+                        });
+
+                        // Call the registration API with channel information
+                        const result = await registerUserAndGetMagicLink(
+                            userName,
+                            orgUuid,
+                            workflowUserId,
+                            config
+                        );
+
+                        const magicLink = result.magicLink;
+
+                        // Create the hyperlink text
+                        magicLinkText = `\n\n[Manage your Integrations](${magicLink})`;
+                        console.log('[Magic Link] Successfully generated magic link for user:', userName);
+
+                        if (result.channel) {
+                            console.log('[Magic Link] User added to channel:', {
+                                channelId: result.channel.id,
+                                channelUuid: result.channel.uuid,
+                                channelName: result.channel.name
+                            });
+                        }
+                    }
                 } catch (error) {
-                    console.error('Error generating magic link:', error);
+                    console.error('[Magic Link] Error generating magic link:', error.message);
                     // If magic link generation fails, continue without it
                     magicLinkText = '';
                 }
@@ -382,6 +544,49 @@ class EchoBot extends ActivityHandler {
                     };
                 }
 
+                // Check if this is a thread reply and enrich if necessary
+                let customData = null;
+
+                if (isThreadReply(context.activity)) {
+                    console.log('[THREAD ENRICHMENT] Detected thread reply, fetching complete data...');
+
+                    // Extract the thread message ID
+                    const threadMessageId = extractThreadMessageId(context.activity);
+
+                    // Fetch complete thread message
+                    let originalThreadMessage = null;
+                    if (threadMessageId) {
+                        originalThreadMessage = await fetchCompleteThreadMessage(context, threadMessageId);
+                    }
+
+                    // Fetch extended user information
+                    const extendedUserInfo = await fetchExtendedUserInfo(
+                        context,
+                        context.activity.from.id
+                    );
+
+                    // Build the custom data object
+                    customData = {
+                        isThreadReply: true,
+                        threadMessageId: threadMessageId,
+                        originalThreadMessage: originalThreadMessage,
+                        user: extendedUserInfo,
+                        conversationDetails: {
+                            conversationType: context.activity.conversation.conversationType,
+                            conversationId: context.activity.conversation.id,
+                            tenantId: context.activity.conversation.tenantId,
+                            isGroup: context.activity.conversation.isGroup || false
+                        },
+                        enrichmentTimestamp: new Date().toISOString()
+                    };
+
+                    console.log('[THREAD ENRICHMENT] Custom data prepared:', {
+                        hasOriginalMessage: !!originalThreadMessage,
+                        hasUserInfo: !!extendedUserInfo,
+                        threadMessageId: threadMessageId
+                    });
+                }
+
                 // Create enriched payload for n8n
                 const enrichedPayload = {
                     ...context.activity,
@@ -397,12 +602,21 @@ class EchoBot extends ActivityHandler {
                             att.contentType !== 'text/plain' &&
                             att.contentUrl
                         ) || []
-                    }
+                    },
+                    // Add custom data if available (for thread replies and enriched user info)
+                    ...(customData && { custom: customData })
                 };
 
                 // Log what we're sending to n8n
                 console.log('=== SENDING TO N8N ===');
                 console.log('File detection summary:', enrichedPayload._fileDetection);
+                if (enrichedPayload.custom) {
+                    console.log('Custom enrichment included:', {
+                        isThreadReply: enrichedPayload.custom.isThreadReply,
+                        hasOriginalMessage: !!enrichedPayload.custom.originalThreadMessage,
+                        hasExtendedUserInfo: !!enrichedPayload.custom.user
+                    });
+                }
 
                 const n8nResponse = await axios.post(N8N_WEBHOOK_URL, enrichedPayload, config);
 

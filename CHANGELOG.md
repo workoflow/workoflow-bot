@@ -5,6 +5,51 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 2025-10-17
+
+### Changed
+- **BREAKING**: Magic link generation now uses Registration API instead of local JWT tokens
+  - Bot now calls Workoflow's `/api/register` endpoint to create users immediately
+  - Users are created in the database when the bot generates the link, not when clicked
+  - Magic link generation is now asynchronous and requires API credentials
+  - Better error handling with specific error messages for different failure scenarios
+- Updated Teams app manifest version from 1.0.4 to 1.0.5
+- Enhanced bot.js with Teams-specific functionality imports (TeamsInfo, ConnectorClient)
+- Replaced local magic link generation with API-based approach in bot.js
+
+### Added
+- New `register-api.js` module for API-based user registration
+  - `registerUserAndGetMagicLink()` function for full control over registration
+  - `generateMagicLinkViaAPI()` function for backward compatibility
+  - Support for organization name configuration
+  - Returns user ID, email, and organization details along with magic link
+- New environment variables for API authentication:
+  - `WORKOFLOW_API_USER` - API username for Basic Auth
+  - `WORKOFLOW_API_PASSWORD` - API password for Basic Auth
+- Channel information extraction and association
+  - Bot now extracts channel information from Teams conversation context
+  - Passes channel UUID and name to registration API for user grouping
+  - Users are automatically associated with their Teams channel
+- Thread detection and enrichment functionality
+  - `isThreadReply()` function to detect thread replies in Teams messages
+  - `extractThreadMessageId()` to extract message IDs from thread replies
+  - Support for HTML attachment parsing with Schema.org Reply type detection
+  - Enhanced payload sent to n8n with thread context and custom data
+- Extended user information fetching
+  - `fetchExtendedUserInfo()` function using TeamsInfo API
+  - Retrieves detailed user profiles including team context
+  - Enriches thread replies with complete user information
+- New `test-thread-detection.js` test script for thread detection verification
+- New dependency: `botframework-connector@^4.23.3` for Teams-specific APIs
+- Comprehensive error handling for API failures, timeouts, and authentication issues
+
+### Deprecated
+- Local JWT generation in `generate-magic-link.js` (kept for backward compatibility)
+- `MAGIC_LINK_SECRET` environment variable (no longer needed with API approach)
+
+### Removed
+- Deleted `deploy/deploy-stage.zip` (replaced with deploy-staging.zip)
+
 ## 2025-10-16
 
 ### Fixed
