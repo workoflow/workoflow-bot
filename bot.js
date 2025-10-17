@@ -453,69 +453,78 @@ class EchoBot extends ActivityHandler {
                 
                 // Generate magic link for the user using the new API approach
                 let magicLinkText = '';
-                try {
-                    // Use the values from context.activity which now have fallbacks set at the top
-                    const userName = context.activity.from.name;
-                    const orgUuid = context.activity.conversation.tenantId;
-                    const workflowUserId = context.activity.from.aadObjectId;
 
-                    // Extract channel information from the conversation context
-                    const channelId = context.activity.conversation.id;
-                    const channelName = context.activity.conversation.name ||
-                                      context.activity.channelData?.channel?.name ||
-                                      `Channel-${channelId.substring(0, 8)}`;
+                // Check if this is a personal (1:1) conversation
+                const isPersonalChat = context.activity.conversation.conversationType === 'personal';
 
-                    // Check if API credentials are configured
-                    if (!process.env.WORKOFLOW_API_USER || !process.env.WORKOFLOW_API_PASSWORD) {
-                        console.log('[Magic Link] API credentials not configured, skipping magic link generation');
-                        console.log('[Magic Link] Please set WORKOFLOW_API_USER and WORKOFLOW_API_PASSWORD in .env');
-                    } else {
-                        // Import the new function directly
-                        const { registerUserAndGetMagicLink } = require('./register-api');
+                if (isPersonalChat) {
+                    try {
+                        // Use the values from context.activity which now have fallbacks set at the top
+                        const userName = context.activity.from.name;
+                        const orgUuid = context.activity.conversation.tenantId;
+                        const workflowUserId = context.activity.from.aadObjectId;
 
-                        // Prepare configuration with channel information
-                        const config = {
-                            baseUrl: process.env.MAGIC_LINK_DOMAIN || 'http://localhost:3979',
-                            apiUser: process.env.WORKOFLOW_API_USER,
-                            apiPassword: process.env.WORKOFLOW_API_PASSWORD,
-                            channelUuid: `channel-${channelId}`, // Use conversation ID as channel UUID
-                            channelName: channelName
-                        };
+                        // Extract channel information from the conversation context
+                        const channelId = context.activity.conversation.id;
+                        const channelName = context.activity.conversation.name ||
+                                          context.activity.channelData?.channel?.name ||
+                                          `Channel-${channelId.substring(0, 8)}`;
 
-                        console.log('[Magic Link] Registering user with channel:', {
-                            userName,
-                            orgUuid,
-                            workflowUserId,
-                            channelUuid: config.channelUuid,
-                            channelName: config.channelName
-                        });
+                        // Check if API credentials are configured
+                        if (!process.env.WORKOFLOW_API_USER || !process.env.WORKOFLOW_API_PASSWORD) {
+                            console.log('[Magic Link] API credentials not configured, skipping magic link generation');
+                            console.log('[Magic Link] Please set WORKOFLOW_API_USER and WORKOFLOW_API_PASSWORD in .env');
+                        } else {
+                            // Import the new function directly
+                            const { registerUserAndGetMagicLink } = require('./register-api');
 
-                        // Call the registration API with channel information
-                        const result = await registerUserAndGetMagicLink(
-                            userName,
-                            orgUuid,
-                            workflowUserId,
-                            config
-                        );
+                            // Prepare configuration with channel information
+                            const config = {
+                                baseUrl: process.env.MAGIC_LINK_DOMAIN || 'http://localhost:3979',
+                                apiUser: process.env.WORKOFLOW_API_USER,
+                                apiPassword: process.env.WORKOFLOW_API_PASSWORD,
+                                channelUuid: `channel-${channelId}`, // Use conversation ID as channel UUID
+                                channelName: channelName
+                            };
 
-                        const magicLink = result.magicLink;
-
-                        // Create the hyperlink text
-                        magicLinkText = `\n\n[Manage your Integrations](${magicLink})`;
-                        console.log('[Magic Link] Successfully generated magic link for user:', userName);
-
-                        if (result.channel) {
-                            console.log('[Magic Link] User added to channel:', {
-                                channelId: result.channel.id,
-                                channelUuid: result.channel.uuid,
-                                channelName: result.channel.name
+                            console.log('[Magic Link] Registering user with channel:', {
+                                userName,
+                                orgUuid,
+                                workflowUserId,
+                                channelUuid: config.channelUuid,
+                                channelName: config.channelName
                             });
+
+                            // Call the registration API with channel information
+                            const result = await registerUserAndGetMagicLink(
+                                userName,
+                                orgUuid,
+                                workflowUserId,
+                                config
+                            );
+
+                            const magicLink = result.magicLink;
+
+                            // Create the hyperlink text
+                            magicLinkText = `\n\n[Manage your Integrations](${magicLink})`;
+                            console.log('[Magic Link] Successfully generated magic link for user:', userName);
+
+                            if (result.channel) {
+                                console.log('[Magic Link] User added to channel:', {
+                                    channelId: result.channel.id,
+                                    channelUuid: result.channel.uuid,
+                                    channelName: result.channel.name
+                                });
+                            }
                         }
+                    } catch (error) {
+                        console.error('[Magic Link] Error generating magic link:', error.message);
+                        // If magic link generation fails, continue without it
+                        magicLinkText = '';
                     }
-                } catch (error) {
-                    console.error('[Magic Link] Error generating magic link:', error.message);
-                    // If magic link generation fails, continue without it
-                    magicLinkText = '';
+                } else {
+                    console.log('[Magic Link] Skipping magic link generation for non-personal conversation');
+                    console.log('[Magic Link] Conversation type:', context.activity.conversation.conversationType);
                 }
                 
                 // Get Azure OpenAI rate limit status
