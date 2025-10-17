@@ -284,6 +284,7 @@ class EchoBot extends ActivityHandler {
             "💡 Tip: Bewerte Ticket-Qualität mit 'Bewerte die Qualität auf einer Skala von 1 bis 10: [Ticket-Link]'",
             "💡 Tip: Zeige Projekthistorie mit 'Zeige mir die Projekthistorie auf Basis der wichtigsten Jira-Tickets [Sprint-Board-Link]'",
             "💡 Tip: Fasse Kommentare zusammen mit 'Fasse die letzten 5 Kommentare aus folgendem Jira-Ticket zusammen [Ticket-Link]'",
+            "💡 Tip: Kommentiere Jira-Tickets mit 'Füge einen Kommentar zu [Ticket-Link] hinzu: [Dein Text]'",
             
             // Employee & Skills Search Tips
             "💡 Tip: Finde Experten mit 'Nenne mir einen erfahrenen [Rolle] mit Projekterfahrung im [Technologie]-Umfeld'",
