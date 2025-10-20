@@ -448,17 +448,22 @@ class EchoBot extends ActivityHandler {
                     console.log(JSON.stringify(context.activity.value, null, 2));
                 }
 
-                // Select a random loading message and tip
+                // Select a random loading message
                 const randomLoadingMessage = this.loadingMessages[Math.floor(Math.random() * this.loadingMessages.length)];
-                const randomTip = this.tips[Math.floor(Math.random() * this.tips.length)];
-                
-                // Generate magic link for the user using the new API approach
-                let magicLinkText = '';
 
                 // Check if this is a personal (1:1) conversation
                 const isPersonalChat = context.activity.conversation.conversationType === 'personal';
 
+                // Initialize optional message components (only for personal chats)
+                let magicLinkText = '';
+                let randomTip = '';
+                let statusBarText = '';
+
                 if (isPersonalChat) {
+                    // Select a random tip (only for personal chats)
+                    randomTip = this.tips[Math.floor(Math.random() * this.tips.length)];
+
+                    // Generate magic link for the user using the new API approach
                     try {
                         // Use the values from context.activity which now have fallbacks set at the top
                         const userName = context.activity.from.name;
@@ -523,27 +528,28 @@ class EchoBot extends ActivityHandler {
                         // If magic link generation fails, continue without it
                         magicLinkText = '';
                     }
+
+                    // Get Azure OpenAI rate limit status (only for personal chats)
+                    try {
+                        const azureHeaders = await getAzureOpenAIStatus();
+                        const formattedStatus = formatRateLimitStatus(azureHeaders);
+                        if (formattedStatus) {
+                            statusBarText = `\n\n${formattedStatus}`;
+                        }
+                    } catch (error) {
+                        console.error('Error getting Azure OpenAI status:', error);
+                        // Continue without status bar if it fails
+                    }
                 } else {
-                    console.log('[Magic Link] Skipping magic link generation for non-personal conversation');
+                    console.log('[Magic Link] Skipping magic link, tip, and status bar for non-personal conversation');
                     console.log('[Magic Link] Conversation type:', context.activity.conversation.conversationType);
                 }
-                
-                // Get Azure OpenAI rate limit status
-                let statusBarText = '';
-                try {
-                    const azureHeaders = await getAzureOpenAIStatus();
-                    const formattedStatus = formatRateLimitStatus(azureHeaders);
-                    if (formattedStatus) {
-                        statusBarText = `\n\n${formattedStatus}`;
-                    }
-                } catch (error) {
-                    console.error('Error getting Azure OpenAI status:', error);
-                    // Continue without status bar if it fails
-                }
-                
-                // Create the enhanced loading message with tip, status bar, then magic link at the end
-                const loadingMessage = `${randomLoadingMessage}\n\n_${randomTip}_${statusBarText}${magicLinkText}`;
-                
+
+                // Create the loading message conditionally based on conversation type
+                const loadingMessage = isPersonalChat
+                    ? `${randomLoadingMessage}\n\n_${randomTip}_${statusBarText}${magicLinkText}`
+                    : randomLoadingMessage;
+
                 await context.sendActivity(MessageFactory.text(loadingMessage, loadingMessage));
 
                 const config = {};

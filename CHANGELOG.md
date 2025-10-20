@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 2025-10-20
+
+### Changed
+- Improved user experience in group chats by removing unnecessary UI elements
+  - Tips are now only shown in personal (1:1) conversations
+  - Azure OpenAI rate limit status bar is now only shown in personal conversations
+  - Group chat loading messages now display only the base loading message without extra information
+  - Updated logging to indicate when tips and status bars are skipped for non-personal conversations
+
 ## 2025-10-17
 
 ### Changed
