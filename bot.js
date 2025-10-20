@@ -452,6 +452,13 @@ class EchoBot extends ActivityHandler {
                 const randomLoadingMessage = this.loadingMessages[Math.floor(Math.random() * this.loadingMessages.length)];
 
                 // Check if this is a personal (1:1) conversation
+                // Fetch extended user information early (needed for both magic link and custom data)
+                console.log('[ENRICHMENT] Fetching extended user information...');
+                const extendedUserInfo = await fetchExtendedUserInfo(
+                    context,
+                    context.activity.from.id
+                );
+
                 const isPersonalChat = context.activity.conversation.conversationType === 'personal';
 
                 // Initialize optional message components (only for personal chats)
@@ -469,6 +476,7 @@ class EchoBot extends ActivityHandler {
                         const userName = context.activity.from.name;
                         const orgUuid = context.activity.conversation.tenantId;
                         const workflowUserId = context.activity.from.aadObjectId;
+                        const userEmail = extendedUserInfo?.email || null;
 
                         // Extract channel information from the conversation context
                         const channelId = context.activity.conversation.id;
@@ -484,19 +492,21 @@ class EchoBot extends ActivityHandler {
                             // Import the new function directly
                             const { registerUserAndGetMagicLink } = require('./register-api');
 
-                            // Prepare configuration with channel information
+                            // Prepare configuration with channel information and email
                             const config = {
                                 baseUrl: process.env.MAGIC_LINK_DOMAIN || 'http://localhost:3979',
                                 apiUser: process.env.WORKOFLOW_API_USER,
                                 apiPassword: process.env.WORKOFLOW_API_PASSWORD,
                                 channelUuid: `channel-${channelId}`, // Use conversation ID as channel UUID
-                                channelName: channelName
+                                channelName: channelName,
+                                email: userEmail // Add real user email
                             };
 
                             console.log('[Magic Link] Registering user with channel:', {
                                 userName,
                                 orgUuid,
                                 workflowUserId,
+                                userEmail,
                                 channelUuid: config.channelUuid,
                                 channelName: config.channelName
                             });
@@ -560,11 +570,25 @@ class EchoBot extends ActivityHandler {
                     };
                 }
 
-                // Check if this is a thread reply and enrich if necessary
-                let customData = null;
+                // Always enrich with custom data (using already-fetched extendedUserInfo)
+                // Initialize custom data with common properties
+                let customData = {
+                    isThreadReply: false,
+                    threadMessageId: null,
+                    originalThreadMessage: null,
+                    user: extendedUserInfo,
+                    conversationDetails: {
+                        conversationType: context.activity.conversation.conversationType,
+                        conversationId: context.activity.conversation.id,
+                        tenantId: context.activity.conversation.tenantId,
+                        isGroup: context.activity.conversation.isGroup || false
+                    },
+                    enrichmentTimestamp: new Date().toISOString()
+                };
 
+                // Additional enrichment for thread replies
                 if (isThreadReply(context.activity)) {
-                    console.log('[THREAD ENRICHMENT] Detected thread reply, fetching complete data...');
+                    console.log('[THREAD ENRICHMENT] Detected thread reply, fetching thread data...');
 
                     // Extract the thread message ID
                     const threadMessageId = extractThreadMessageId(context.activity);
@@ -575,33 +599,22 @@ class EchoBot extends ActivityHandler {
                         originalThreadMessage = await fetchCompleteThreadMessage(context, threadMessageId);
                     }
 
-                    // Fetch extended user information
-                    const extendedUserInfo = await fetchExtendedUserInfo(
-                        context,
-                        context.activity.from.id
-                    );
+                    // Update custom data with thread-specific properties
+                    customData.isThreadReply = true;
+                    customData.threadMessageId = threadMessageId;
+                    customData.originalThreadMessage = originalThreadMessage;
 
-                    // Build the custom data object
-                    customData = {
-                        isThreadReply: true,
-                        threadMessageId: threadMessageId,
-                        originalThreadMessage: originalThreadMessage,
-                        user: extendedUserInfo,
-                        conversationDetails: {
-                            conversationType: context.activity.conversation.conversationType,
-                            conversationId: context.activity.conversation.id,
-                            tenantId: context.activity.conversation.tenantId,
-                            isGroup: context.activity.conversation.isGroup || false
-                        },
-                        enrichmentTimestamp: new Date().toISOString()
-                    };
-
-                    console.log('[THREAD ENRICHMENT] Custom data prepared:', {
+                    console.log('[THREAD ENRICHMENT] Thread data prepared:', {
                         hasOriginalMessage: !!originalThreadMessage,
-                        hasUserInfo: !!extendedUserInfo,
                         threadMessageId: threadMessageId
                     });
                 }
+
+                console.log('[ENRICHMENT] Custom data prepared:', {
+                    isThreadReply: customData.isThreadReply,
+                    hasUserInfo: !!extendedUserInfo,
+                    hasConversationDetails: !!customData.conversationDetails
+                });
 
                 // Create enriched payload for n8n
                 const enrichedPayload = {
@@ -619,24 +632,29 @@ class EchoBot extends ActivityHandler {
                             att.contentUrl
                         ) || []
                     },
-                    // Add custom data if available (for thread replies and enriched user info)
-                    ...(customData && { custom: customData })
+                    // Always include custom data (populated for thread replies, null properties otherwise)
+                    custom: customData
                 };
 
                 // Log what we're sending to n8n
                 console.log('=== SENDING TO N8N ===');
                 console.log('File detection summary:', enrichedPayload._fileDetection);
-                if (enrichedPayload.custom) {
-                    console.log('Custom enrichment included:', {
-                        isThreadReply: enrichedPayload.custom.isThreadReply,
-                        hasOriginalMessage: !!enrichedPayload.custom.originalThreadMessage,
-                        hasExtendedUserInfo: !!enrichedPayload.custom.user
-                    });
-                }
+                console.log('Custom enrichment included:', {
+                    isThreadReply: enrichedPayload.custom.isThreadReply,
+                    hasOriginalMessage: !!enrichedPayload.custom.originalThreadMessage,
+                    hasExtendedUserInfo: !!enrichedPayload.custom.user
+                });
 
                 const n8nResponse = await axios.post(N8N_WEBHOOK_URL, enrichedPayload, config);
 
-                console.log('Received n8n response:', n8nResponse.data);
+                console.log('=== RAW N8N RESPONSE ===');
+                console.log('Type of data:', typeof n8nResponse.data);
+                console.log('Data:', JSON.stringify(n8nResponse.data, null, 2));
+                if (n8nResponse.data && n8nResponse.data.output) {
+                    console.log('Type of data.output:', typeof n8nResponse.data.output);
+                    console.log('data.output:', n8nResponse.data.output);
+                }
+
                 let n8nReplyText = 'Sorry, I could not get a response from the agent.';
                 let attachmentUrl = null;
 
@@ -645,16 +663,45 @@ class EchoBot extends ActivityHandler {
                     try {
                         // Parse the stringified JSON
                         const parsedOutput = JSON.parse(n8nResponse.data.output);
+                        console.log('=== PARSED OUTPUT ===');
+                        console.log('Type:', typeof parsedOutput);
+                        console.log('Content:', JSON.stringify(parsedOutput, null, 2));
 
-                        // Extract the actual message
-                        if (parsedOutput.output) {
-                            n8nReplyText = parsedOutput.output;
+                        // Handle nested structure: sometimes n8n returns output.output.output
+                        let actualOutput = parsedOutput.output;
+
+                        // If output is an object with nested output property, unwrap it
+                        if (actualOutput && typeof actualOutput === 'object' && actualOutput.output) {
+                            console.log('Detected nested output structure, unwrapping...');
+                            actualOutput = actualOutput.output;
+                            // Also check for nested attachment
+                            if (actualOutput && typeof actualOutput === 'object' && actualOutput.attachment) {
+                                attachmentUrl = actualOutput.attachment;
+                            }
                         }
 
-                        // Check for attachment URL
+                        // Extract the actual message - ensure it's a string
+                        if (actualOutput) {
+                            if (typeof actualOutput === 'string') {
+                                n8nReplyText = actualOutput;
+                            } else if (typeof actualOutput === 'object') {
+                                console.error('ERROR: actualOutput is still an object:', actualOutput);
+                                n8nReplyText = JSON.stringify(actualOutput);
+                            } else {
+                                n8nReplyText = String(actualOutput);
+                            }
+                        }
+
+                        // Check for attachment URL at top level
                         if (parsedOutput.attachment) {
                             attachmentUrl = parsedOutput.attachment;
                         }
+
+                        console.log('=== FINAL EXTRACTED VALUES ===');
+                        console.log('n8nReplyText type:', typeof n8nReplyText);
+                        console.log('n8nReplyText:', n8nReplyText);
+                        console.log('attachmentUrl:', attachmentUrl);
+
                     } catch (parseError) {
                         console.error('Error parsing n8n response JSON:', parseError);
                         // Fallback to treating the output as plain text if it's not valid JSON

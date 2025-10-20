@@ -13,6 +13,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Azure OpenAI rate limit status bar is now only shown in personal conversations
   - Group chat loading messages now display only the base loading message without extra information
   - Updated logging to indicate when tips and status bars are skipped for non-personal conversations
+- Enhanced webhook payload with consistent custom data structure
+  - `custom` property is now always included in webhook payloads sent to n8n
+  - Extended user information (including email) is now fetched for all messages, not just thread replies
+  - Non-thread messages receive custom data with null thread properties but populated user and conversation details
+  - Ensures consistent payload structure for easier n8n workflow parsing
+- Improved magic link generation with real user email
+  - Magic link API now receives the actual user's email address from Microsoft Teams
+  - Extended user information is fetched early to provide email for registration
+  - Added email parameter to `registerUserAndGetMagicLink()` function
+  - Better logging to track email usage in registration requests
 
 ## 2025-10-17
 

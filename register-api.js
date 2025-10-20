@@ -21,10 +21,11 @@ const axios = require('axios');
  * @param {string} [config.orgName] - Optional organization name
  * @param {string} [config.channelUuid] - Optional channel UUID
  * @param {string} [config.channelName] - Optional channel name
+ * @param {string} [config.email] - Optional user email address
  * @returns {Promise<Object>} - Registration result with magic link
  */
 async function registerUserAndGetMagicLink(name, orgUuid, workflowUserId, config) {
-    const { baseUrl, apiUser, apiPassword, orgName, channelUuid, channelName } = config;
+    const { baseUrl, apiUser, apiPassword, orgName, channelUuid, channelName, email } = config;
 
     // Validate required parameters
     if (!name || !orgUuid || !workflowUserId) {
@@ -48,6 +49,11 @@ async function registerUserAndGetMagicLink(name, orgUuid, workflowUserId, config
             requestData.org_name = orgName;
         }
 
+        // Add optional email if provided
+        if (email) {
+            requestData.email = email;
+        }
+
         // Add optional channel parameters if provided
         if (channelUuid) {
             requestData.channel_uuid = channelUuid;
@@ -55,6 +61,13 @@ async function registerUserAndGetMagicLink(name, orgUuid, workflowUserId, config
         if (channelName) {
             requestData.channel_name = channelName;
         }
+
+        console.log('[Registration API] Request data:', {
+            name: requestData.name,
+            email: requestData.email || 'not provided',
+            org_uuid: requestData.org_uuid,
+            workflow_user_id: requestData.workflow_user_id
+        });
 
         // Make API request with Basic Auth
         const response = await axios.post(
