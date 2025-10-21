@@ -775,9 +775,9 @@ class EchoBot extends ActivityHandler {
                     }
 
                     // Add general troubleshooting message
-                    errorMessage += 'Possible causes:\n';
-                    errorMessage += '• Requests exceeding 60 seconds are cancelled due to proxy timeout\n';
-                    errorMessage += '• Rate limit reached (too many requests per minute)\n';
+                    errorMessage += 'Possible causes:\n\n';
+                    errorMessage += '• Requests exceeding 60 seconds are cancelled due to proxy timeout\n\n';
+                    errorMessage += '• Rate limit reached (too many requests per minute)\n\n';
                     errorMessage += '• Technical issue with the workflow processing\n\n';
                     errorMessage += 'Please try again with a simpler request or contact support if the issue persists.';
 
