@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 2025-10-21
+
+### Fixed
+- Error message formatting in Teams/Slack chat interfaces
+  - Added proper newlines (`\n\n` instead of `\n`) to error message bullet points
+  - Fixes issue where "Possible causes" bullet points were rendered on a single line
+  - Each bullet point now displays on its own line for better readability
+
 ## 2025-10-20
 
 ### Changed
