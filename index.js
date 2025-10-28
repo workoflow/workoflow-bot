@@ -131,19 +131,30 @@ server.get('/api/test-telemetry', async (req, res) => {
     }
 });
 
-// Middleware to restrict /openai/* endpoints to localhost only
+// Middleware to restrict /openai/* endpoints to localhost and Docker internal networks
 function localhostOnly(req, res, next) {
     const remoteAddress = req.connection.remoteAddress || req.socket.remoteAddress || req.headers['x-forwarded-for'];
+
+    // Check for localhost
     const isLocalhost = remoteAddress === '127.0.0.1' ||
                        remoteAddress === '::1' ||
                        remoteAddress === '::ffff:127.0.0.1' ||
                        remoteAddress === 'localhost';
 
-    if (!isLocalhost) {
+    // Check for Docker bridge network IPs (172.16.0.0/12)
+    // Extract IPv4 from IPv6-mapped format (::ffff:172.18.0.1 -> 172.18.0.1)
+    let ipv4Address = remoteAddress;
+    if (remoteAddress && remoteAddress.startsWith('::ffff:')) {
+        ipv4Address = remoteAddress.substring(7);
+    }
+
+    const isDockerNetwork = ipv4Address && ipv4Address.match(/^172\.(1[6-9]|2[0-9]|3[0-1])\.\d+\.\d+$/);
+
+    if (!isLocalhost && !isDockerNetwork) {
         console.warn(`[Security] Blocked /openai/* request from non-localhost IP: ${remoteAddress}`);
         res.send(403, {
             error: 'Forbidden',
-            message: 'Access to /openai/* endpoints is restricted to localhost only'
+            message: 'Access to /openai/* endpoints is restricted to localhost and Docker internal networks only'
         });
         return next(false);
     }

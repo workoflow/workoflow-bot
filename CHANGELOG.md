@@ -10,7 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 - Added localhost-only restriction to `/openai/*` endpoints
   - Middleware now blocks all non-localhost requests to Azure OpenAI proxy endpoints
-  - Allows access from localhost (127.0.0.1, ::1, ::ffff:127.0.0.1) and Docker containers via host.docker.internal
+  - Allows access from localhost (127.0.0.1, ::1, ::ffff:127.0.0.1) and Docker internal networks (172.16.0.0/12)
+  - Docker containers can access via both host.docker.internal and direct bridge network IPs
   - Returns 403 Forbidden with clear error message for unauthorized access attempts
   - Logs all blocked requests with source IP for security monitoring
   - Other endpoints (/api/messages, /api/health) remain accessible externally
