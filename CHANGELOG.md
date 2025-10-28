@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 2025-10-28
+
+### Security
+- Added localhost-only restriction to `/openai/*` endpoints
+  - Middleware now blocks all non-localhost requests to Azure OpenAI proxy endpoints
+  - Allows access from localhost (127.0.0.1, ::1, ::ffff:127.0.0.1) and Docker containers via host.docker.internal
+  - Returns 403 Forbidden with clear error message for unauthorized access attempts
+  - Logs all blocked requests with source IP for security monitoring
+  - Other endpoints (/api/messages, /api/health) remain accessible externally
+
 ## 2025-10-21
 
 ### Fixed

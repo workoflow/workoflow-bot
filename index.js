@@ -131,9 +131,30 @@ server.get('/api/test-telemetry', async (req, res) => {
     }
 });
 
+// Middleware to restrict /openai/* endpoints to localhost only
+function localhostOnly(req, res, next) {
+    const remoteAddress = req.connection.remoteAddress || req.socket.remoteAddress || req.headers['x-forwarded-for'];
+    const isLocalhost = remoteAddress === '127.0.0.1' ||
+                       remoteAddress === '::1' ||
+                       remoteAddress === '::ffff:127.0.0.1' ||
+                       remoteAddress === 'localhost';
+
+    if (!isLocalhost) {
+        console.warn(`[Security] Blocked /openai/* request from non-localhost IP: ${remoteAddress}`);
+        res.send(403, {
+            error: 'Forbidden',
+            message: 'Access to /openai/* endpoints is restricted to localhost only'
+        });
+        return next(false);
+    }
+
+    return next();
+}
+
 // Azure OpenAI proxy endpoint - mimics Azure OpenAI's URL structure
 // Handles all HTTP methods (GET, POST, PUT, DELETE, etc.)
-server.opts('/openai/*', (req, res, next) => {
+// Apply localhost restriction before handling requests
+server.opts('/openai/*', localhostOnly, (req, res, next) => {
     // Handle CORS preflight
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
@@ -143,11 +164,12 @@ server.opts('/openai/*', (req, res, next) => {
 });
 
 // Route all Azure OpenAI requests through the proxy
-server.get('/openai/*', azureOpenAIProxy);
-server.post('/openai/*', azureOpenAIProxy);
-server.put('/openai/*', azureOpenAIProxy);
-server.del('/openai/*', azureOpenAIProxy);
-server.patch('/openai/*', azureOpenAIProxy);
+// Apply localhost restriction to all methods
+server.get('/openai/*', localhostOnly, azureOpenAIProxy);
+server.post('/openai/*', localhostOnly, azureOpenAIProxy);
+server.put('/openai/*', localhostOnly, azureOpenAIProxy);
+server.del('/openai/*', localhostOnly, azureOpenAIProxy);
+server.patch('/openai/*', localhostOnly, azureOpenAIProxy);
 
 // Listen for incoming requests.
 server.post('/api/messages', async (req, res) => {
