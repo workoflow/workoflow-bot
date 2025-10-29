@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 2025-10-29
+
+### Fixed
+- Bot Framework Emulator compatibility for status bar and magic link display
+  - Fixed conversation type detection to handle `undefined` conversationType
+  - Status bar, tips, and magic link now display correctly in Bot Framework Emulator
+  - Added `isGroup` check to explicitly exclude group conversations
+  - Improved logging to show full conversation details for debugging
+
 ## 2025-10-28
 
 ### Security

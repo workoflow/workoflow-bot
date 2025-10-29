@@ -459,7 +459,12 @@ class EchoBot extends ActivityHandler {
                     context.activity.from.id
                 );
 
-                const isPersonalChat = context.activity.conversation.conversationType === 'personal';
+                // Check if this is a personal (1:1) conversation
+                // Include undefined conversationType for Bot Framework Emulator compatibility
+                // Explicitly exclude group conversations using isGroup flag
+                const conversationType = context.activity.conversation.conversationType;
+                const isGroup = context.activity.conversation.isGroup || false;
+                const isPersonalChat = (conversationType === 'personal' || conversationType === undefined) && !isGroup;
 
                 // Initialize optional message components (only for personal chats)
                 let magicLinkText = '';
@@ -552,7 +557,12 @@ class EchoBot extends ActivityHandler {
                     }
                 } else {
                     console.log('[Magic Link] Skipping magic link, tip, and status bar for non-personal conversation');
-                    console.log('[Magic Link] Conversation type:', context.activity.conversation.conversationType);
+                    console.log('[Magic Link] Conversation details:', {
+                        conversationType: conversationType,
+                        isGroup: isGroup,
+                        conversationId: context.activity.conversation.id,
+                        isPersonalChat: isPersonalChat
+                    });
                 }
 
                 // Create the loading message conditionally based on conversation type
