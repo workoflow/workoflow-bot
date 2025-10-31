@@ -35,18 +35,44 @@ server.listen(port, () => {
     console.log('\nTo talk to your bot, open the emulator select "Open Bot"');
 });
 
-const credentialsFactory = new ConfigurationServiceClientCredentialFactory({
-    MicrosoftAppId: process.env.MicrosoftAppId,
-    MicrosoftAppPassword: process.env.MicrosoftAppPassword,
-    MicrosoftAppType: process.env.MicrosoftAppType,
-    MicrosoftAppTenantId: process.env.MicrosoftAppTenantId
-});
+// Configure Bot Framework adapter
+// Authentication is always disabled when LOAD_TEST_MODE=true
+const isLoadTestMode = process.env.LOAD_TEST_MODE === 'true';
 
-const botFrameworkAuthentication = createBotFrameworkAuthenticationFromConfiguration(null, credentialsFactory);
-
-// Create adapter.
-// See https://aka.ms/about-bot-adapter to learn more about adapters.
-const adapter = new CloudAdapter(botFrameworkAuthentication);
+let adapter;
+if (isLoadTestMode) {
+    console.log('🧪 Bot Framework authentication DISABLED (LOAD_TEST_MODE)');
+    // No authentication - for load testing
+    const credentialsFactory = new ConfigurationServiceClientCredentialFactory({
+        MicrosoftAppId: '',
+        MicrosoftAppPassword: '',
+        MicrosoftAppType: '',
+        MicrosoftAppTenantId: ''
+    });
+    const botFrameworkAuthentication = createBotFrameworkAuthenticationFromConfiguration(null, credentialsFactory);
+    adapter = new CloudAdapter(botFrameworkAuthentication);
+} else if (process.env.MicrosoftAppId && process.env.MicrosoftAppPassword) {
+    console.log('🔐 Bot Framework authentication ENABLED');
+    const credentialsFactory = new ConfigurationServiceClientCredentialFactory({
+        MicrosoftAppId: process.env.MicrosoftAppId,
+        MicrosoftAppPassword: process.env.MicrosoftAppPassword,
+        MicrosoftAppType: process.env.MicrosoftAppType,
+        MicrosoftAppTenantId: process.env.MicrosoftAppTenantId
+    });
+    const botFrameworkAuthentication = createBotFrameworkAuthenticationFromConfiguration(null, credentialsFactory);
+    adapter = new CloudAdapter(botFrameworkAuthentication);
+} else {
+    console.log('⚠️  Bot Framework authentication DISABLED (no credentials configured)');
+    // No authentication - for local development without credentials
+    const credentialsFactory = new ConfigurationServiceClientCredentialFactory({
+        MicrosoftAppId: '',
+        MicrosoftAppPassword: '',
+        MicrosoftAppType: '',
+        MicrosoftAppTenantId: ''
+    });
+    const botFrameworkAuthentication = createBotFrameworkAuthenticationFromConfiguration(null, credentialsFactory);
+    adapter = new CloudAdapter(botFrameworkAuthentication);
+}
 
 // Catch-all for errors.
 const onTurnErrorHandler = async (context, error) => {

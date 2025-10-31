@@ -19,6 +19,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Fixed deprecated `req.connection.remoteAddress` to `req.socket.remoteAddress`
   - All functionality preserved including Bot Framework integration and Phoenix tracing
 
+### Improved
+- **Simplified configuration for load testing**
+  - Cleaned up `.env` file - removed commented multi-environment sections (#PROD, #STAGE, #DEV)
+  - Consolidated Microsoft App credentials to single clean section
+  - Added clear comment indicating credentials not needed when `LOAD_TEST_MODE=true`
+  - Improved `.env.dist` template - removed environment-specific comments
+  - Better documentation of `LOAD_TEST_MODE` purpose and usage
+
+### Technical Details
+- Configuration now emphasizes single unified approach
+- `LOAD_TEST_MODE=true` bypasses Bot Framework authentication for load testing
+- Cleaner, more maintainable environment configuration files
+
 ## 2025-10-29
 
 ### Fixed

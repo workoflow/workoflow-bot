@@ -24,6 +24,17 @@ if (!openaiClient) {
 
 console.log('N8N_WEBHOOK_URL:', N8N_WEBHOOK_URL);
 
+// Helper function to send messages - skips actual sending in load test mode (avoids Bot Framework auth)
+// Returns the sent message for logging/testing purposes
+async function sendMessage(context, message) {
+    if (process.env.LOAD_TEST_MODE === 'true') {
+        console.log('[LOAD_TEST_MODE] Skipping reply:',
+            typeof message === 'string' ? message.substring(0, 100) : 'Activity');
+        return message;
+    }
+    return await context.sendActivity(message);
+}
+
 // Function to format rate limit status into a compact status bar
 function formatRateLimitStatus(headers) {
     if (!headers) return null;
@@ -372,7 +383,7 @@ class EchoBot extends ActivityHandler {
 
                         // Send thank you message
                         if (feedbackData.rating > 0) {
-                            await context.sendActivity(MessageFactory.text('Thank you for your feedback! 🙏'));
+                            await sendMessage(context, MessageFactory.text('Thank you for your feedback! 🙏'));
                         }
                     } catch (error) {
                         console.error('Error sending feedback to webhook:', error.message);
@@ -570,7 +581,7 @@ class EchoBot extends ActivityHandler {
                     ? `${randomLoadingMessage}\n\n_${randomTip}_${statusBarText}${magicLinkText}`
                     : randomLoadingMessage;
 
-                await context.sendActivity(MessageFactory.text(loadingMessage, loadingMessage));
+                await sendMessage(context, MessageFactory.text(loadingMessage, loadingMessage));
 
                 const config = {};
                 if (N8N_BASIC_AUTH_USERNAME && N8N_BASIC_AUTH_PASSWORD) {
@@ -723,10 +734,10 @@ class EchoBot extends ActivityHandler {
                 if (attachmentUrl) {
                     // Send the text with a link to the attachment
                     const replyWithLink = `${n8nReplyText}\n\n📎 [Download attachment](${attachmentUrl})`;
-                    await context.sendActivity(MessageFactory.text(replyWithLink, replyWithLink));
+                    await sendMessage(context, MessageFactory.text(replyWithLink, replyWithLink));
                 } else {
                     // Send just the text message
-                    await context.sendActivity(MessageFactory.text(n8nReplyText, n8nReplyText));
+                    await sendMessage(context, MessageFactory.text(n8nReplyText, n8nReplyText));
                 }
 
                 // Check if feedback is enabled and we should ask for feedback (first interaction of the day)
@@ -743,7 +754,7 @@ class EchoBot extends ActivityHandler {
 
                         // Send feedback card
                         const feedbackCard = createFeedbackCard();
-                        await context.sendActivity({ attachments: [feedbackCard] });
+                        await sendMessage(context, { attachments: [feedbackCard] });
 
                         console.log(`[FEEDBACK DEBUG] Feedback card sent to user: ${context.activity.from.name} (${userId})`);
                     }
@@ -760,7 +771,7 @@ class EchoBot extends ActivityHandler {
 
                 // Check if the error is about file attachments
                 if (error.message && error.message.includes('File attachments')) {
-                    await context.sendActivity(MessageFactory.text('I received a response but cannot send file attachments directly. Please let me know if you need the information in a different format.'));
+                    await sendMessage(context, MessageFactory.text('I received a response but cannot send file attachments directly. Please let me know if you need the information in a different format.'));
                 } else {
                     // Determine the specific error type based on error details
                     let errorMessage = 'There was an error communicating with the AI agent.\n\n';
@@ -791,7 +802,7 @@ class EchoBot extends ActivityHandler {
                     errorMessage += '• Technical issue with the workflow processing\n\n';
                     errorMessage += 'Please try again with a simpler request or contact support if the issue persists.';
 
-                    await context.sendActivity(MessageFactory.text(errorMessage));
+                    await sendMessage(context, MessageFactory.text(errorMessage));
                 }
             }
 
@@ -827,7 +838,7 @@ class EchoBot extends ActivityHandler {
             const welcomeText = 'Hello and welcome! I am your n8n AI Agent. How can I help you today?';
             for (let cnt = 0; cnt < membersAdded.length; ++cnt) {
                 if (membersAdded[cnt].id !== context.activity.recipient.id) {
-                    await context.sendActivity(MessageFactory.text(welcomeText, welcomeText));
+                    await sendMessage(context, MessageFactory.text(welcomeText, welcomeText));
                 }
             }
             await next();

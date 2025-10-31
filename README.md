@@ -31,11 +31,26 @@ Install the necessary npm packages:
 
 Create a `.env` file in the root of the project directory (e.g., `workoflow-bot/.env`).
 
-*   `MicrosoftAppId` and `MicrosoftAppPassword`: Your bot's App ID and Password from the Azure Bot registration. Leave blank if you are not securing your bot or for initial local testing without authentication.
+#### Required Variables:
+*   `WORKOFLOW_N8N_WEBHOOK_URL`: The url of your n8n webhook.
+
+#### Optional Variables:
+*   `WORKOFLOW_PORT`: The port on which the bot server will listen. Defaults to `3978` if not specified.
+*   `LOAD_TEST_MODE`: Set to `true` to skip Bot Framework replies (for load testing). Defaults to `false`.
+*   `MicrosoftAppId` and `MicrosoftAppPassword`: Your bot's App ID and Password from the Azure Bot registration. Leave blank for local development without authentication.
 *   `MicrosoftAppType`: Type of Microsoft App. Common values are `UserAssignedMSI`, `MultiTenant`.
 *   `MicrosoftAppTenantId`: The tenant ID for your Microsoft App.
-*   `WORKOFLOW_PORT`: The port on which the bot server will listen. Defaults to `3978` if not specified.
-*   `WORKOFLOW_N8N_WEBHOOK_URL`: The url of your n8n webhook.
+
+#### Load Testing:
+For load testing with k6, start the bot with `LOAD_TEST_MODE=true`:
+```bash
+LOAD_TEST_MODE=true npm start
+```
+
+This mode allows the bot to:
+- Receive and process messages
+- Call the n8n webhook (testing the full workflow)
+- Skip sending replies via Bot Framework (avoiding authentication requirements)
 
 ### 4. Run the Bot
 
