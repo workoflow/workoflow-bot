@@ -23,10 +23,10 @@ async function azureOpenAIProxy(req, res) {
         
         if (!openaiClient) {
             console.error('[Azure OpenAI Proxy] Failed to get OpenAI client');
-            res.send(500, { error: 'Failed to initialize OpenAI client' });
+            res.status(500).json({ error: 'Failed to initialize OpenAI client' });
             return;
         }
-        
+
         // Route to appropriate handler based on path
         if (originalPath.includes('/chat/completions')) {
             await handleChatCompletions(req, res, openaiClient);
@@ -35,12 +35,12 @@ async function azureOpenAIProxy(req, res) {
         } else if (originalPath.includes('/embeddings')) {
             await handleEmbeddings(req, res, openaiClient);
         } else {
-            res.send(404, { error: `Endpoint ${originalPath} not supported` });
+            res.status(404).json({ error: `Endpoint ${originalPath} not supported` });
         }
-        
+
     } catch (error) {
         console.error('[Azure OpenAI Proxy] Error:', error.message);
-        res.send(500, {
+        res.status(500).json({
             error: 'Proxy error',
             message: error.message
         });
@@ -110,9 +110,9 @@ async function handleChatCompletions(req, res, openaiClient) {
         if (response.usage) {
             console.log(`  Tokens: ${response.usage.total_tokens} total`);
         }
-        
-        
-        res.send(200, response);
+
+
+        res.json(response);
         
     } catch (error) {
         handleError(res, error);
@@ -128,13 +128,13 @@ async function handleCompletions(req, res, openaiClient) {
             ...req.body,
             model: req.body.model || DEFAULT_DEPLOYMENT
         });
-        
+
         if (response.usage) {
             console.log(`  Tokens: ${response.usage.total_tokens} total`);
         }
-        
-        res.send(200, response);
-        
+
+        res.json(response);
+
     } catch (error) {
         handleError(res, error);
     }
@@ -149,13 +149,13 @@ async function handleEmbeddings(req, res, openaiClient) {
             ...req.body,
             model: req.body.model || 'text-embedding-ada-002'
         });
-        
+
         if (response.usage) {
             console.log(`  Tokens: ${response.usage.total_tokens} total`);
         }
-        
-        res.send(200, response);
-        
+
+        res.json(response);
+
     } catch (error) {
         handleError(res, error);
     }
@@ -166,10 +166,10 @@ async function handleEmbeddings(req, res, openaiClient) {
  */
 function handleError(res, error) {
     console.error('[Azure OpenAI Proxy] Error:', error.message);
-    
+
     // Return error in OpenAI format
     if (error.status) {
-        res.send(error.status, {
+        res.status(error.status).json({
             error: {
                 message: error.message,
                 type: error.type || 'invalid_request_error',
@@ -177,7 +177,7 @@ function handleError(res, error) {
             }
         });
     } else {
-        res.send(500, {
+        res.status(500).json({
             error: {
                 message: error.message,
                 type: 'proxy_error',

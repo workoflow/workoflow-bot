@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 2025-10-31
+
+### Changed
+- Migrated web server from Restify to Express
+  - Replaced `restify@11.1.0` with `express@4.21.2`
+  - Eliminates DEP0111 deprecation warnings caused by Restify's SPDY dependency
+  - Updated all route handlers to use Express syntax
+  - Changed response methods from `res.send(status, data)` to `res.status(status).json(data)`
+  - Updated middleware: `restify.plugins.bodyParser()` → `express.json()` and `express.urlencoded()`
+  - Modified OPTIONS handler from `server.opts()` to `server.options()`
+  - Updated DELETE handler from `server.del()` to `server.delete()`
+  - Fixed deprecated `req.connection.remoteAddress` to `req.socket.remoteAddress`
+  - All functionality preserved including Bot Framework integration and Phoenix tracing
+
 ## 2025-10-29
 
 ### Fixed

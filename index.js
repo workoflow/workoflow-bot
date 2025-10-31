@@ -5,7 +5,7 @@ const dotenv = require('dotenv');
 const ENV_FILE = path.join(__dirname, '.env');
 dotenv.config({ path: ENV_FILE });
 
-const restify = require('restify');
+const express = require('express');
 
 // Initialize Phoenix tracing for observability
 const { initializePhoenix } = require('./phoenix');
@@ -24,11 +24,13 @@ const { EchoBot } = require('./bot');
 const { azureOpenAIProxy } = require('./azure-openai-proxy');
 
 // Create HTTP server
-const server = restify.createServer();
-server.use(restify.plugins.bodyParser());
+const server = express();
+server.use(express.json());
+server.use(express.urlencoded({ extended: true }));
 
-server.listen(process.env.WORKOFLOW_PORT || 3978, () => {
-    console.log(`\n${ server.name } listening to ${ server.url }`);
+const port = process.env.WORKOFLOW_PORT || 3978;
+server.listen(port, () => {
+    console.log(`\nServer listening on http://localhost:${port}`);
     console.log('\nGet Bot Framework Emulator: https://aka.ms/botframework-emulator');
     console.log('\nTo talk to your bot, open the emulator select "Open Bot"');
 });
@@ -73,29 +75,28 @@ adapter.onTurnError = onTurnErrorHandler;
 const myBot = new EchoBot();
 
 // Health check endpoint
-server.get('/api/health', (req, res, next) => {
-    res.send({
+server.get('/api/health', (req, res) => {
+    res.json({
         status: 'healthy',
         timestamp: new Date().toISOString(),
         service: 'workoflow-bot',
         port: process.env.WORKOFLOW_PORT || 3978
     });
-    return next();
 });
 
 // Phoenix telemetry test endpoint
 server.get('/api/test-telemetry', async (req, res) => {
     const { getOpenAIClient } = require('./phoenix');
-    
+
     console.log('[Phoenix Test] Testing Phoenix integration...');
     const openaiClient = getOpenAIClient();
-    
+
     if (!openaiClient) {
         console.error('[Phoenix Test] OpenAI client not initialized');
-        res.send(500, { error: 'Phoenix integration not initialized' });
+        res.status(500).json({ error: 'Phoenix integration not initialized' });
         return;
     }
-    
+
     try {
         // Make a simple test call that will be traced by Phoenix
         console.log('[Phoenix Test] Making test OpenAI call...');
@@ -108,7 +109,7 @@ server.get('/api/test-telemetry', async (req, res) => {
             max_tokens: 10,
             temperature: 0
         });
-        
+
         const testResponse = {
             message: 'Phoenix test successful',
             phoenixEnabled: process.env.PHOENIX_ENABLED === 'true',
@@ -118,13 +119,13 @@ server.get('/api/test-telemetry', async (req, res) => {
             openaiResponse: response.choices[0]?.message?.content || 'No response',
             timestamp: new Date().toISOString()
         };
-        
+
         console.log('[Phoenix Test] Test completed:', testResponse);
-        res.send(testResponse);
+        res.json(testResponse);
     } catch (error) {
         console.error('[Phoenix Test] Error:', error.message);
-        res.send(500, { 
-            error: 'Phoenix test failed', 
+        res.status(500).json({
+            error: 'Phoenix test failed',
             message: error.message,
             phoenixEnabled: process.env.PHOENIX_ENABLED === 'true'
         });
@@ -133,7 +134,7 @@ server.get('/api/test-telemetry', async (req, res) => {
 
 // Middleware to restrict /openai/* endpoints to localhost and Docker internal networks
 function localhostOnly(req, res, next) {
-    const remoteAddress = req.connection.remoteAddress || req.socket.remoteAddress || req.headers['x-forwarded-for'];
+    const remoteAddress = req.socket.remoteAddress || req.headers['x-forwarded-for'];
 
     // Check for localhost
     const isLocalhost = remoteAddress === '127.0.0.1' ||
@@ -152,26 +153,25 @@ function localhostOnly(req, res, next) {
 
     if (!isLocalhost && !isDockerNetwork) {
         console.warn(`[Security] Blocked /openai/* request from non-localhost IP: ${remoteAddress}`);
-        res.send(403, {
+        res.status(403).json({
             error: 'Forbidden',
             message: 'Access to /openai/* endpoints is restricted to localhost and Docker internal networks only'
         });
-        return next(false);
+        return;
     }
 
-    return next();
+    next();
 }
 
 // Azure OpenAI proxy endpoint - mimics Azure OpenAI's URL structure
 // Handles all HTTP methods (GET, POST, PUT, DELETE, etc.)
 // Apply localhost restriction before handling requests
-server.opts('/openai/*', localhostOnly, (req, res, next) => {
+server.options('/openai/*', localhostOnly, (req, res) => {
     // Handle CORS preflight
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, api-key, azure-endpoint');
-    res.send(200);
-    return next();
+    res.sendStatus(200);
 });
 
 // Route all Azure OpenAI requests through the proxy
@@ -179,7 +179,7 @@ server.opts('/openai/*', localhostOnly, (req, res, next) => {
 server.get('/openai/*', localhostOnly, azureOpenAIProxy);
 server.post('/openai/*', localhostOnly, azureOpenAIProxy);
 server.put('/openai/*', localhostOnly, azureOpenAIProxy);
-server.del('/openai/*', localhostOnly, azureOpenAIProxy);
+server.delete('/openai/*', localhostOnly, azureOpenAIProxy);
 server.patch('/openai/*', localhostOnly, azureOpenAIProxy);
 
 // Listen for incoming requests.
