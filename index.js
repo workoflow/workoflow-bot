@@ -25,8 +25,9 @@ const { azureOpenAIProxy } = require('./azure-openai-proxy');
 
 // Create HTTP server
 const server = express();
-server.use(express.json());
-server.use(express.urlencoded({ extended: true }));
+const requestSizeLimit = process.env.REQUEST_SIZE_LIMIT || '10mb';
+server.use(express.json({ limit: requestSizeLimit }));
+server.use(express.urlencoded({ extended: true, limit: requestSizeLimit }));
 
 const port = process.env.WORKOFLOW_PORT || 3978;
 server.listen(port, () => {
