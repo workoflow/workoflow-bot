@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 2025-11-25
+
+### Fixed
+- Chat sometimes displaying raw JSON instead of formatted message
+  - Added recursive unwrapping for double-encoded JSON responses from n8n
+  - Bot now correctly extracts message text when AI outputs JSON as text
+  - Handles up to 3 levels of JSON nesting for robustness
+  - Preserves attachment URLs from any nesting level
+
 ## 2025-10-31
 
 ### Changed

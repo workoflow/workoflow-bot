@@ -267,6 +267,55 @@ function createFeedbackCard() {
     });
 }
 
+/**
+ * Recursively unwraps JSON strings that contain { "output": "..." } structure.
+ * Handles double/triple encoding where AI outputs JSON as text.
+ * @param {any} value - The value to unwrap
+ * @param {number} maxDepth - Maximum recursion depth (default 3)
+ * @returns {{ output: string, attachment: string|null }}
+ */
+function unwrapJsonOutput(value, maxDepth = 3) {
+    if (maxDepth <= 0) return { output: value, attachment: null };
+
+    // If it's a string, check if it's JSON
+    if (typeof value === 'string') {
+        // Quick check: does it look like JSON?
+        const trimmed = value.trim();
+        if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+            try {
+                const parsed = JSON.parse(trimmed);
+                // If parsed has an "output" field, recurse
+                if (parsed && typeof parsed === 'object' && 'output' in parsed) {
+                    const result = unwrapJsonOutput(parsed.output, maxDepth - 1);
+                    return {
+                        output: result.output,
+                        attachment: result.attachment || parsed.attachment || null
+                    };
+                }
+                // Parsed but no output field - return original string
+                return { output: value, attachment: null };
+            } catch (e) {
+                // Not valid JSON - return as-is
+                return { output: value, attachment: null };
+            }
+        }
+        // Not JSON-like - return as-is
+        return { output: value, attachment: null };
+    }
+
+    // If it's an object with output field, unwrap it
+    if (value && typeof value === 'object' && 'output' in value) {
+        const result = unwrapJsonOutput(value.output, maxDepth - 1);
+        return {
+            output: result.output,
+            attachment: result.attachment || value.attachment || null
+        };
+    }
+
+    // Otherwise, convert to string
+    return { output: String(value), attachment: null };
+}
+
 class EchoBot extends ActivityHandler {
     constructor() {
         super();
@@ -680,53 +729,33 @@ class EchoBot extends ActivityHandler {
                 let attachmentUrl = null;
 
                 // Handle the response structure - n8n returns output as stringified JSON
+                // Uses unwrapJsonOutput to handle double/triple JSON encoding from AI
                 if (n8nResponse.data && n8nResponse.data.output) {
                     try {
-                        // Parse the stringified JSON
+                        // Parse the stringified JSON from n8n
                         const parsedOutput = JSON.parse(n8nResponse.data.output);
                         console.log('=== PARSED OUTPUT ===');
                         console.log('Type:', typeof parsedOutput);
                         console.log('Content:', JSON.stringify(parsedOutput, null, 2));
 
-                        // Handle nested structure: sometimes n8n returns output.output.output
-                        let actualOutput = parsedOutput.output;
+                        // Use recursive unwrapper to handle any level of JSON nesting
+                        // This handles cases where AI outputs JSON as text (double-encoding)
+                        const unwrapped = unwrapJsonOutput(parsedOutput);
+                        n8nReplyText = unwrapped.output;
+                        attachmentUrl = unwrapped.attachment;
 
-                        // If output is an object with nested output property, unwrap it
-                        if (actualOutput && typeof actualOutput === 'object' && actualOutput.output) {
-                            console.log('Detected nested output structure, unwrapping...');
-                            actualOutput = actualOutput.output;
-                            // Also check for nested attachment
-                            if (actualOutput && typeof actualOutput === 'object' && actualOutput.attachment) {
-                                attachmentUrl = actualOutput.attachment;
-                            }
-                        }
-
-                        // Extract the actual message - ensure it's a string
-                        if (actualOutput) {
-                            if (typeof actualOutput === 'string') {
-                                n8nReplyText = actualOutput;
-                            } else if (typeof actualOutput === 'object') {
-                                console.error('ERROR: actualOutput is still an object:', actualOutput);
-                                n8nReplyText = JSON.stringify(actualOutput);
-                            } else {
-                                n8nReplyText = String(actualOutput);
-                            }
-                        }
-
-                        // Check for attachment URL at top level
-                        if (parsedOutput.attachment) {
-                            attachmentUrl = parsedOutput.attachment;
-                        }
-
-                        console.log('=== FINAL EXTRACTED VALUES ===');
-                        console.log('n8nReplyText type:', typeof n8nReplyText);
+                        console.log('=== UNWRAPPED OUTPUT ===');
                         console.log('n8nReplyText:', n8nReplyText);
                         console.log('attachmentUrl:', attachmentUrl);
 
                     } catch (parseError) {
                         console.error('Error parsing n8n response JSON:', parseError);
-                        // Fallback to treating the output as plain text if it's not valid JSON
-                        n8nReplyText = n8nResponse.data.output;
+                        // Fallback: try unwrapping the raw output in case it's double-encoded text
+                        const fallbackResult = unwrapJsonOutput(n8nResponse.data.output);
+                        n8nReplyText = fallbackResult.output;
+                        attachmentUrl = fallbackResult.attachment;
+                        console.log('=== FALLBACK UNWRAP ===');
+                        console.log('n8nReplyText:', n8nReplyText);
                     }
                 }
 
