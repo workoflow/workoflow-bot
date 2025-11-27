@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 2025-11-27
+
+### Changed
+- Upgraded Azure OpenAI model from GPT-4.1 to GPT-5-mini
+  - Added `reasoning_effort` parameter support (low/medium/high)
+  - Default reasoning effort set to `medium` for better tool selection with many tools
+  - Auto-converts `max_tokens` to `max_completion_tokens` for GPT-5 compatibility
+  - Added reasoning token logging for observability
+- Removed `OPENAI_CONCISENESS_ENABLED` and `OPENAI_CONCISENESS_INSTRUCTION` env vars
+  - GPT-5-mini uses native `reasoning_effort` parameter instead of prompt injection
+- Updated `.env.dist` with new Azure OpenAI endpoint and GPT-5-mini configuration
+
 ## 2025-11-25
 
 ### Fixed

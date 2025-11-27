@@ -2,7 +2,10 @@ const { getOpenAIClient } = require('./phoenix');
 const { trace, context } = require('@opentelemetry/api');
 
 // Azure OpenAI configuration from environment
-const DEFAULT_DEPLOYMENT = process.env.AZURE_OPENAI_DEPLOYMENT || 'gpt-4.1';
+const DEFAULT_DEPLOYMENT = process.env.AZURE_OPENAI_DEPLOYMENT || 'gpt-5-mini';
+// GPT-5-mini reasoning effort: 'medium' recommended for agents with many tools
+// Values: 'low' (fast), 'medium' (balanced), 'high' (best for complex reasoning)
+const REASONING_EFFORT = process.env.AZURE_OPENAI_REASONING_EFFORT || 'medium';
 
 /**
  * Azure OpenAI proxy middleware
@@ -58,7 +61,7 @@ async function handleChatCompletions(req, res, openaiClient) {
             req.body.stream = false;
             delete req.body.stream_options;
         }
-        
+
         // Extract user's input message for Phoenix display
         let userInput = '';
         if (req.body.messages && req.body.messages.length > 0) {
@@ -69,11 +72,21 @@ async function handleChatCompletions(req, res, openaiClient) {
             }
         }
         
-        // Make the request using instrumented client (Phoenix will automatically trace this)
-        const response = await openaiClient.chat.completions.create({
+        // Prepare request parameters for GPT-5.1-mini
+        const requestParams = {
             ...req.body,
-            model: req.body.model || DEFAULT_DEPLOYMENT
-        });
+            model: req.body.model || DEFAULT_DEPLOYMENT,
+            reasoning_effort: req.body.reasoning_effort || REASONING_EFFORT
+        };
+
+        // GPT-5.1 models require max_completion_tokens instead of max_tokens
+        if (req.body.max_tokens && !req.body.max_completion_tokens) {
+            requestParams.max_completion_tokens = req.body.max_tokens;
+            delete requestParams.max_tokens;
+        }
+
+        // Make the request using instrumented client (Phoenix will automatically trace this)
+        const response = await openaiClient.chat.completions.create(requestParams);
         
         // Get the current active span and set input/output attributes for Phoenix display
         const activeSpan = trace.getActiveSpan();
@@ -108,7 +121,8 @@ async function handleChatCompletions(req, res, openaiClient) {
         console.log(`  User Input: ${userInput.substring(0, 100)}${userInput.length > 100 ? '...' : ''}`);
         console.log(`  Assistant Output: ${assistantOutput.substring(0, 100)}${assistantOutput.length > 100 ? '...' : ''}`);
         if (response.usage) {
-            console.log(`  Tokens: ${response.usage.total_tokens} total`);
+            const reasoningTokens = response.usage.completion_tokens_details?.reasoning_tokens || 0;
+            console.log(`  Tokens: ${response.usage.total_tokens} total (reasoning: ${reasoningTokens})`);
         }
 
 
