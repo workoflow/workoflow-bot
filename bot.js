@@ -632,6 +632,15 @@ class EchoBot extends ActivityHandler {
 
                 await sendMessage(context, MessageFactory.text(loadingMessage, loadingMessage));
 
+                // Start typing indicator (send every 3 seconds to keep it active during webhook processing)
+                const typingInterval = setInterval(async () => {
+                    try {
+                        await context.sendActivity({ type: 'typing' });
+                    } catch (e) {
+                        // Ignore errors if context is no longer valid
+                    }
+                }, 3000);
+
                 const config = {};
                 if (N8N_BASIC_AUTH_USERNAME && N8N_BASIC_AUTH_PASSWORD) {
                     config.auth = {
@@ -833,6 +842,9 @@ class EchoBot extends ActivityHandler {
 
                     await sendMessage(context, MessageFactory.text(errorMessage));
                 }
+            } finally {
+                // Always stop the typing indicator
+                clearInterval(typingInterval);
             }
 
             await next();

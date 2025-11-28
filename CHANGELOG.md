@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 2025-11-28
+
+### Added
+- Typing indicator for MS Teams chat
+  - Shows "..." animation while waiting for webhook response
+  - Sends typing activity every 3 seconds to keep indicator active during long processing
+  - Properly cleans up interval in finally block to prevent memory leaks
+
 ## 2025-11-27
 
 ### Changed
