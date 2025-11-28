@@ -40,6 +40,16 @@ server.listen(port, () => {
 // Authentication is always disabled when LOAD_TEST_MODE=true
 const isLoadTestMode = process.env.LOAD_TEST_MODE === 'true';
 
+// Validate LOAD_TEST_API_KEY when LOAD_TEST_MODE is enabled
+if (isLoadTestMode) {
+    if (!process.env.LOAD_TEST_API_KEY) {
+        console.error('FATAL: LOAD_TEST_MODE=true requires LOAD_TEST_API_KEY to be set');
+        console.error('   Set LOAD_TEST_API_KEY environment variable to a secure random value');
+        process.exit(1);
+    }
+    console.log('API key validation ENABLED for load testing');
+}
+
 let adapter;
 if (isLoadTestMode) {
     console.log('🧪 Bot Framework authentication DISABLED (LOAD_TEST_MODE)');
@@ -190,6 +200,40 @@ function localhostOnly(req, res, next) {
     next();
 }
 
+// Middleware to validate API key in load test mode
+// Only applied when LOAD_TEST_MODE=true
+function loadTestApiKeyValidator(req, res, next) {
+    // Skip validation if not in load test mode
+    if (!isLoadTestMode) {
+        return next();
+    }
+
+    const apiKey = req.headers['x-api-key'];
+    const expectedKey = process.env.LOAD_TEST_API_KEY;
+
+    if (!apiKey) {
+        console.warn('[Security] Blocked request to /api/messages: missing x-api-key header');
+        res.status(401).json({
+            error: 'Unauthorized',
+            message: 'Missing x-api-key header'
+        });
+        return;
+    }
+
+    // Use timing-safe comparison to prevent timing attacks
+    if (apiKey.length !== expectedKey.length ||
+        !require('crypto').timingSafeEqual(Buffer.from(apiKey), Buffer.from(expectedKey))) {
+        console.warn('[Security] Blocked request to /api/messages: invalid API key');
+        res.status(401).json({
+            error: 'Unauthorized',
+            message: 'Invalid API key'
+        });
+        return;
+    }
+
+    next();
+}
+
 // Azure OpenAI proxy endpoint - mimics Azure OpenAI's URL structure
 // Handles all HTTP methods (GET, POST, PUT, DELETE, etc.)
 // Apply localhost restriction before handling requests
@@ -210,7 +254,7 @@ server.delete('/openai/*', localhostOnly, azureOpenAIProxy);
 server.patch('/openai/*', localhostOnly, azureOpenAIProxy);
 
 // Listen for incoming requests.
-server.post('/api/messages', async (req, res) => {
+server.post('/api/messages', loadTestApiKeyValidator, async (req, res) => {
     // Route received a request to adapter for processing
     await adapter.process(req, res, (context) => myBot.run(context));
 });
