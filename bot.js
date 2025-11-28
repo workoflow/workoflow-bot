@@ -384,6 +384,7 @@ class EchoBot extends ActivityHandler {
         ];
 
         this.onMessage(async (context, next) => {
+            let typingInterval; // Declare at top for finally block access
             try {
                 // Set fallback values at the highest level for Bot Framework Emulator compatibility
                 // These will be used throughout the message handling
@@ -633,7 +634,7 @@ class EchoBot extends ActivityHandler {
                 await sendMessage(context, MessageFactory.text(loadingMessage, loadingMessage));
 
                 // Start typing indicator (send every 3 seconds to keep it active during webhook processing)
-                const typingInterval = setInterval(async () => {
+                typingInterval = setInterval(async () => {
                     try {
                         await context.sendActivity({ type: 'typing' });
                     } catch (e) {
@@ -843,8 +844,8 @@ class EchoBot extends ActivityHandler {
                     await sendMessage(context, MessageFactory.text(errorMessage));
                 }
             } finally {
-                // Always stop the typing indicator
-                clearInterval(typingInterval);
+                // Always stop the typing indicator (if it was started)
+                if (typingInterval) clearInterval(typingInterval);
             }
 
             await next();
