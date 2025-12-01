@@ -24,12 +24,27 @@ function initializePhoenix() {
     
     // Check if Phoenix is enabled
     const phoenixEnabled = process.env.PHOENIX_ENABLED === 'true';
-    
-    // Check if Azure OpenAI credentials are available
-    if (!process.env.AZURE_OPENAI_API_KEY) {
-        console.error('[Phoenix] AZURE_OPENAI_API_KEY not set');
+
+    // Validate required Azure OpenAI environment variables
+    const requiredEnvVars = [
+        'AZURE_OPENAI_ENDPOINT',
+        'AZURE_OPENAI_API_KEY',
+        'AZURE_OPENAI_DEPLOYMENT',
+        'AZURE_OPENAI_API_VERSION'
+    ];
+
+    const missingVars = requiredEnvVars.filter(v => !process.env[v]);
+    if (missingVars.length > 0) {
+        console.error('[Phoenix] Missing required Azure OpenAI environment variables:');
+        missingVars.forEach(v => console.error(`  - ${v}`));
+        console.error('[Phoenix] Please configure these in your .env file');
         return null;
     }
+
+    // Log model configuration
+    const deployment = process.env.AZURE_OPENAI_DEPLOYMENT;
+    const isGPT5 = deployment.toLowerCase().includes('gpt-5');
+    console.log(`[Phoenix] Azure OpenAI: ${deployment} (GPT-5 mode: ${isGPT5})`);
     
     // Create OpenAI client for Azure (this will be instrumented if Phoenix is enabled)
     openaiClient = new OpenAI({

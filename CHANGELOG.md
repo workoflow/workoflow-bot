@@ -7,11 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 2025-12-01
 
+### Added
+- Multi-model support for GPT-4.1 and GPT-5-mini
+  - Both Azure OpenAI configurations documented in `.env.dist`
+  - Switch models by commenting/uncommenting config blocks
+  - Model-aware parameter handling in proxy (GPT-5 params only for GPT-5)
+  - Startup validation for required Azure OpenAI environment variables
+
 ### Changed
 - Replaced manual typing indicator with Bot Framework ShowTypingMiddleware
   - Typing now appears within 200ms of receiving a message (was ~5+ seconds)
   - Uses official ShowTypingMiddleware for automatic handling
   - Removed manual setInterval/clearInterval code from bot.js
+- Removed hardcoded model fallbacks from bot.js, index.js, test-proxy.js
+  - All Azure OpenAI config now requires explicit environment variables
 
 ## 2025-11-28
 

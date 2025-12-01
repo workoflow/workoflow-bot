@@ -2,10 +2,21 @@ const { getOpenAIClient } = require('./phoenix');
 const { trace, context } = require('@opentelemetry/api');
 
 // Azure OpenAI configuration from environment
-const DEFAULT_DEPLOYMENT = process.env.AZURE_OPENAI_DEPLOYMENT || 'gpt-5-mini';
-// GPT-5-mini reasoning effort: 'medium' recommended for agents with many tools
-// Values: 'low' (fast), 'medium' (balanced), 'high' (best for complex reasoning)
+const DEFAULT_DEPLOYMENT = process.env.AZURE_OPENAI_DEPLOYMENT;
+if (!DEFAULT_DEPLOYMENT) {
+    console.error('FATAL: AZURE_OPENAI_DEPLOYMENT environment variable is required');
+    process.exit(1);
+}
+
+// Detect if using GPT-5.x model (requires special parameter handling)
+const isGPT5Model = DEFAULT_DEPLOYMENT.toLowerCase().includes('gpt-5');
+
+// GPT-5 reasoning effort: only applied for GPT-5.x models
+// Values: 'none', 'low' (fast), 'medium' (balanced), 'high' (best for complex reasoning)
 const REASONING_EFFORT = process.env.AZURE_OPENAI_REASONING_EFFORT || 'medium';
+
+// Log model configuration on startup
+console.log(`[Azure OpenAI] Model: ${DEFAULT_DEPLOYMENT} (GPT-5 mode: ${isGPT5Model})`);
 
 /**
  * Azure OpenAI proxy middleware
@@ -72,17 +83,22 @@ async function handleChatCompletions(req, res, openaiClient) {
             }
         }
         
-        // Prepare request parameters for GPT-5.1-mini
+        // Prepare request parameters
         const requestParams = {
             ...req.body,
-            model: req.body.model || DEFAULT_DEPLOYMENT,
-            reasoning_effort: req.body.reasoning_effort || REASONING_EFFORT
+            model: req.body.model || DEFAULT_DEPLOYMENT
         };
 
-        // GPT-5.1 models require max_completion_tokens instead of max_tokens
-        if (req.body.max_tokens && !req.body.max_completion_tokens) {
-            requestParams.max_completion_tokens = req.body.max_tokens;
-            delete requestParams.max_tokens;
+        // GPT-5.x specific parameters (not applicable to GPT-4.x)
+        if (isGPT5Model) {
+            // Add reasoning_effort for GPT-5 models
+            requestParams.reasoning_effort = req.body.reasoning_effort || REASONING_EFFORT;
+
+            // GPT-5.x models require max_completion_tokens instead of max_tokens
+            if (req.body.max_tokens && !req.body.max_completion_tokens) {
+                requestParams.max_completion_tokens = req.body.max_tokens;
+                delete requestParams.max_tokens;
+            }
         }
 
         // Make the request using instrumented client (Phoenix will automatically trace this)
@@ -121,8 +137,12 @@ async function handleChatCompletions(req, res, openaiClient) {
         console.log(`  User Input: ${userInput.substring(0, 100)}${userInput.length > 100 ? '...' : ''}`);
         console.log(`  Assistant Output: ${assistantOutput.substring(0, 100)}${assistantOutput.length > 100 ? '...' : ''}`);
         if (response.usage) {
-            const reasoningTokens = response.usage.completion_tokens_details?.reasoning_tokens || 0;
-            console.log(`  Tokens: ${response.usage.total_tokens} total (reasoning: ${reasoningTokens})`);
+            if (isGPT5Model) {
+                const reasoningTokens = response.usage.completion_tokens_details?.reasoning_tokens || 0;
+                console.log(`  Tokens: ${response.usage.total_tokens} total (reasoning: ${reasoningTokens})`);
+            } else {
+                console.log(`  Tokens: ${response.usage.total_tokens} total`);
+            }
         }
 
 

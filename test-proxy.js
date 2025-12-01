@@ -4,8 +4,13 @@ require('dotenv').config();
 // Test configuration
 const PROXY_URL = 'http://localhost:3978';
 const API_KEY = process.env.AZURE_OPENAI_API_KEY;
-const DEPLOYMENT = process.env.AZURE_OPENAI_DEPLOYMENT || 'gpt-4.1';
-const API_VERSION = process.env.AZURE_OPENAI_API_VERSION || '2024-12-01-preview';
+const DEPLOYMENT = process.env.AZURE_OPENAI_DEPLOYMENT;
+const API_VERSION = process.env.AZURE_OPENAI_API_VERSION;
+
+if (!DEPLOYMENT || !API_VERSION) {
+    console.error('Error: AZURE_OPENAI_DEPLOYMENT and AZURE_OPENAI_API_VERSION must be set in environment');
+    process.exit(1);
+}
 
 async function testProxy() {
     console.log('Testing Azure OpenAI Proxy...\n');

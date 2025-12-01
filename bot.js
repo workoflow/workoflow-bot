@@ -10,10 +10,11 @@ const N8N_BASIC_AUTH_USERNAME = process.env.N8N_BASIC_AUTH_USERNAME;
 const N8N_BASIC_AUTH_PASSWORD = process.env.N8N_BASIC_AUTH_PASSWORD;
 
 // Azure OpenAI configuration for rate limit monitoring
-const AZURE_OPENAI_ENDPOINT = process.env.AZURE_OPENAI_ENDPOINT || 'https://oai-cec-de-germany-west-central.openai.azure.com';
+// These MUST be set via environment variables - no hardcoded fallbacks
+const AZURE_OPENAI_ENDPOINT = process.env.AZURE_OPENAI_ENDPOINT;
 const AZURE_OPENAI_API_KEY = process.env.AZURE_OPENAI_API_KEY || '';
-const AZURE_OPENAI_DEPLOYMENT = process.env.AZURE_OPENAI_DEPLOYMENT || 'gpt-4.1';
-const AZURE_OPENAI_API_VERSION = process.env.AZURE_OPENAI_API_VERSION || '2024-12-01-preview';
+const AZURE_OPENAI_DEPLOYMENT = process.env.AZURE_OPENAI_DEPLOYMENT;
+const AZURE_OPENAI_API_VERSION = process.env.AZURE_OPENAI_API_VERSION;
 
 // Initialize OpenAI client with Phoenix instrumentation
 // This client is used by the proxy endpoint for N8N requests

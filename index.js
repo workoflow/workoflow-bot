@@ -142,7 +142,7 @@ server.get('/api/test-telemetry', async (req, res) => {
         // Make a simple test call that will be traced by Phoenix
         console.log('[Phoenix Test] Making test OpenAI call...');
         const response = await openaiClient.chat.completions.create({
-            model: process.env.AZURE_OPENAI_DEPLOYMENT || 'gpt-4.1',
+            model: process.env.AZURE_OPENAI_DEPLOYMENT,
             messages: [
                 { role: "system", content: "You are a test assistant." },
                 { role: "user", content: "Respond with 'Phoenix test successful'" }
