@@ -51,7 +51,8 @@ function initializePhoenix() {
         apiKey: process.env.AZURE_OPENAI_API_KEY,
         baseURL: `${process.env.AZURE_OPENAI_ENDPOINT}/openai/deployments/${process.env.AZURE_OPENAI_DEPLOYMENT}`,
         defaultQuery: { 'api-version': process.env.AZURE_OPENAI_API_VERSION },
-        defaultHeaders: { 'api-key': process.env.AZURE_OPENAI_API_KEY }
+        defaultHeaders: { 'api-key': process.env.AZURE_OPENAI_API_KEY },
+        maxRetries: 0  // Fail fast on 429/5xx - don't block workers with retry waits
     });
     
     if (!phoenixEnabled) {
