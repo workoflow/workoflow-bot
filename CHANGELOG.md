@@ -12,6 +12,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Replaced ShowTypingMiddleware with single-shot typing indicator
   - Eliminates race condition where typing could appear after message delivery
 
+### Added
+- Thinking message with "Manage your Integrations" link sent before webhook call
+  - Users can configure their bot behavior while waiting for the response
+  - Only shown in personal (1:1) chats
+
 ### Changed
 - Reduced typing indicator initial delay from 200ms to 50ms for faster feedback
 

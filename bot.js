@@ -573,6 +573,13 @@ class EchoBot extends ActivityHandler {
                     hasExtendedUserInfo: !!enrichedPayload.custom.user
                 });
 
+                // Send thinking message with magic link before webhook call (personal chats only)
+                // This allows users to configure their bot while waiting for the response
+                if (magicLinkText) {
+                    const thinkingMessage = `✅ Deine Nachricht ist angekommen.${magicLinkText}`;
+                    await sendMessage(context, MessageFactory.text(thinkingMessage, thinkingMessage));
+                }
+
                 const n8nResponse = await axios.post(N8N_WEBHOOK_URL, enrichedPayload, config);
 
                 console.log('=== RAW N8N RESPONSE ===');
@@ -617,15 +624,14 @@ class EchoBot extends ActivityHandler {
                     }
                 }
 
-                // Send the response with or without attachment (magic link appended for personal chats)
+                // Send the response with or without attachment
                 if (attachmentUrl) {
                     // Send the text with a link to the attachment
-                    const replyWithLink = `${n8nReplyText}\n\n📎 [Download attachment](${attachmentUrl})${magicLinkText}`;
+                    const replyWithLink = `${n8nReplyText}\n\n📎 [Download attachment](${attachmentUrl})`;
                     await sendMessage(context, MessageFactory.text(replyWithLink, replyWithLink));
                 } else {
                     // Send just the text message
-                    const finalReply = `${n8nReplyText}${magicLinkText}`;
-                    await sendMessage(context, MessageFactory.text(finalReply, finalReply));
+                    await sendMessage(context, MessageFactory.text(n8nReplyText, n8nReplyText));
                 }
 
                 // Check if feedback is enabled and we should ask for feedback (first interaction of the day)
