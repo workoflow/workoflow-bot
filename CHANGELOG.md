@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 2025-12-12
+
+### Removed
+- Status bar feature completely removed
+  - Deleted `formatRateLimitStatus()` and `getAzureOpenAIStatus()` functions
+  - Removed rate limit monitoring via extra Azure OpenAI API call
+  - Removed Azure OpenAI constants that were only used for status bar
+
+### Changed
+- Moved "Manage your Integrations" magic link from loading message to final AI response
+  - Link now appears at the end of actual bot responses instead of loading messages
+  - Still only shown in personal (1:1) chats
+
 ## 2025-12-01
 
 ### Added

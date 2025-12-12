@@ -9,13 +9,6 @@ const FEEDBACK_WEBHOOK_URL = process.env.WORKOFLOW_FEEDBACK_WEBHOOK_URL || 'http
 const N8N_BASIC_AUTH_USERNAME = process.env.N8N_BASIC_AUTH_USERNAME;
 const N8N_BASIC_AUTH_PASSWORD = process.env.N8N_BASIC_AUTH_PASSWORD;
 
-// Azure OpenAI configuration for rate limit monitoring
-// These MUST be set via environment variables - no hardcoded fallbacks
-const AZURE_OPENAI_ENDPOINT = process.env.AZURE_OPENAI_ENDPOINT;
-const AZURE_OPENAI_API_KEY = process.env.AZURE_OPENAI_API_KEY || '';
-const AZURE_OPENAI_DEPLOYMENT = process.env.AZURE_OPENAI_DEPLOYMENT;
-const AZURE_OPENAI_API_VERSION = process.env.AZURE_OPENAI_API_VERSION;
-
 // Initialize OpenAI client with Phoenix instrumentation
 // This client is used by the proxy endpoint for N8N requests
 const openaiClient = getOpenAIClient();
@@ -34,59 +27,6 @@ async function sendMessage(context, message) {
         return message;
     }
     return await context.sendActivity(message);
-}
-
-// Function to format rate limit status into a compact status bar
-function formatRateLimitStatus(headers) {
-    if (!headers) return null;
-    
-    const remainingRequests = headers['x-ratelimit-remaining-requests'];
-    const limitRequests = headers['x-ratelimit-limit-requests'];
-    const remainingTokens = headers['x-ratelimit-remaining-tokens'];
-    const limitTokens = headers['x-ratelimit-limit-tokens'];
-    const model = headers['x-ms-deployment-name'] || AZURE_OPENAI_DEPLOYMENT;
-    const region = headers['x-ms-region'] || 'unknown';
-    
-    if (!remainingRequests || !limitRequests || !remainingTokens || !limitTokens) {
-        return null;
-    }
-    
-    const requestPercentage = Math.round((remainingRequests / limitRequests) * 100);
-    const tokenPercentage = Math.round((remainingTokens / limitTokens) * 100);
-    
-    return `_📊 ${model} (${region}) • ${requestPercentage}% (RLR) • ${tokenPercentage}% (RLT)_`;
-}
-
-// Function to get Azure OpenAI rate limit status (using direct call for headers)
-// This is separate from Phoenix instrumentation to get rate limit info
-async function getAzureOpenAIStatus() {
-    try {
-        // Make a minimal direct API call just to get rate limit headers
-        // This won't be traced by Phoenix but gives us the headers we need
-        const url = `${AZURE_OPENAI_ENDPOINT}/openai/deployments/${AZURE_OPENAI_DEPLOYMENT}/chat/completions?api-version=${AZURE_OPENAI_API_VERSION}`;
-        
-        const response = await axios.post(url, {
-            messages: [
-                { role: "system", content: "You are a helpful assistant." },
-                { role: "user", content: "Hi" }
-            ],
-            max_tokens: 1,
-            temperature: 0
-        }, {
-            headers: {
-                'api-key': AZURE_OPENAI_API_KEY,
-                'Content-Type': 'application/json'
-            },
-            validateStatus: function (status) {
-                return status < 500; // Accept any status less than 500
-            }
-        });
-        
-        return response.headers;
-    } catch (error) {
-        console.error('Error getting Azure OpenAI status:', error.message);
-        return null;
-    }
 }
 
 // Note: Main OpenAI calls should go through the proxy endpoint (/openai/*) for Phoenix tracing
@@ -530,7 +470,6 @@ class EchoBot extends ActivityHandler {
                 // Initialize optional message components (only for personal chats)
                 let magicLinkText = '';
                 let randomTip = '';
-                let statusBarText = '';
 
                 if (isPersonalChat) {
                     // Select a random tip (only for personal chats)
@@ -604,20 +543,8 @@ class EchoBot extends ActivityHandler {
                         // If magic link generation fails, continue without it
                         magicLinkText = '';
                     }
-
-                    // Get Azure OpenAI rate limit status (only for personal chats)
-                    try {
-                        const azureHeaders = await getAzureOpenAIStatus();
-                        const formattedStatus = formatRateLimitStatus(azureHeaders);
-                        if (formattedStatus) {
-                            statusBarText = `\n\n${formattedStatus}`;
-                        }
-                    } catch (error) {
-                        console.error('Error getting Azure OpenAI status:', error);
-                        // Continue without status bar if it fails
-                    }
                 } else {
-                    console.log('[Magic Link] Skipping magic link, tip, and status bar for non-personal conversation');
+                    console.log('[Magic Link] Skipping magic link and tip for non-personal conversation');
                     console.log('[Magic Link] Conversation details:', {
                         conversationType: conversationType,
                         isGroup: isGroup,
@@ -628,7 +555,7 @@ class EchoBot extends ActivityHandler {
 
                 // Create the loading message conditionally based on conversation type
                 const loadingMessage = isPersonalChat
-                    ? `${randomLoadingMessage}\n\n_${randomTip}_${statusBarText}${magicLinkText}`
+                    ? `${randomLoadingMessage}\n\n_${randomTip}_`
                     : randomLoadingMessage;
 
                 await sendMessage(context, MessageFactory.text(loadingMessage, loadingMessage));
@@ -760,14 +687,15 @@ class EchoBot extends ActivityHandler {
                     }
                 }
 
-                // Send the response with or without attachment
+                // Send the response with or without attachment (magic link appended for personal chats)
                 if (attachmentUrl) {
                     // Send the text with a link to the attachment
-                    const replyWithLink = `${n8nReplyText}\n\n📎 [Download attachment](${attachmentUrl})`;
+                    const replyWithLink = `${n8nReplyText}\n\n📎 [Download attachment](${attachmentUrl})${magicLinkText}`;
                     await sendMessage(context, MessageFactory.text(replyWithLink, replyWithLink));
                 } else {
                     // Send just the text message
-                    await sendMessage(context, MessageFactory.text(n8nReplyText, n8nReplyText));
+                    const finalReply = `${n8nReplyText}${magicLinkText}`;
+                    await sendMessage(context, MessageFactory.text(finalReply, finalReply));
                 }
 
                 // Check if feedback is enabled and we should ask for feedback (first interaction of the day)
