@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 2025-12-12
 
+### Changed
+- Improved typing indicator timing for better UX
+  - Reduced initial delay from 200ms to 50ms (typing now appears before loading message)
+  - Added explicit typing activity after loading message to prevent 2-second gap
+
 ### Removed
 - Status bar feature completely removed
   - Deleted `formatRateLimitStatus()` and `getAzureOpenAIStatus()` functions

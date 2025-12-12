@@ -560,6 +560,12 @@ class EchoBot extends ActivityHandler {
 
                 await sendMessage(context, MessageFactory.text(loadingMessage, loadingMessage));
 
+                // Force typing indicator to re-appear after loading message
+                // (Teams hides typing when a message is received)
+                if (process.env.LOAD_TEST_MODE !== 'true') {
+                    await context.sendActivity({ type: 'typing' });
+                }
+
                 const config = {};
                 if (N8N_BASIC_AUTH_USERNAME && N8N_BASIC_AUTH_PASSWORD) {
                     config.auth = {
