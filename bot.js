@@ -577,14 +577,14 @@ class EchoBot extends ActivityHandler {
                 // This allows users to configure their bot while waiting for the response
                 if (magicLinkText) {
                     const thinkingPhrases = [
-                        '🧠 Moment, ich denke nach...',
+                        '🔍 Moment, ich denke nach...',
                         '🔍 Ich schaue mir das genauer an...',
-                        '💭 Lass mich kurz überlegen...',
-                        '⚡ Wird bearbeitet...',
-                        '🎯 Ich arbeite an deiner Anfrage...',
-                        '🤔 Hmm, interessante Frage...',
-                        '📊 Ich analysiere das für dich...',
-                        '🔮 Einen Moment bitte...'
+                        '🔍 Lass mich kurz überlegen...',
+                        '🔍 Wird bearbeitet...',
+                        '🔍 Ich arbeite an deiner Anfrage...',
+                        '🔍 Hmm, interessante Frage...',
+                        '🔍 Ich analysiere das für dich...',
+                        '🔍 Einen Moment bitte...'
                     ];
                     const randomPhrase = thinkingPhrases[Math.floor(Math.random() * thinkingPhrases.length)];
                     const thinkingMessage = `${randomPhrase}${magicLinkText}`;
