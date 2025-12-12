@@ -576,7 +576,18 @@ class EchoBot extends ActivityHandler {
                 // Send thinking message with magic link before webhook call (personal chats only)
                 // This allows users to configure their bot while waiting for the response
                 if (magicLinkText) {
-                    const thinkingMessage = `✅ Deine Nachricht ist angekommen.${magicLinkText}`;
+                    const thinkingPhrases = [
+                        '🧠 Moment, ich denke nach...',
+                        '🔍 Ich schaue mir das genauer an...',
+                        '💭 Lass mich kurz überlegen...',
+                        '⚡ Wird bearbeitet...',
+                        '🎯 Ich arbeite an deiner Anfrage...',
+                        '🤔 Hmm, interessante Frage...',
+                        '📊 Ich analysiere das für dich...',
+                        '🔮 Einen Moment bitte...'
+                    ];
+                    const randomPhrase = thinkingPhrases[Math.floor(Math.random() * thinkingPhrases.length)];
+                    const thinkingMessage = `${randomPhrase}${magicLinkText}`;
                     await sendMessage(context, MessageFactory.text(thinkingMessage, thinkingMessage));
                 }
 
