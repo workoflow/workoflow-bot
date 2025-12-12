@@ -11,6 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed typing indicator persisting after bot response in Teams
   - Replaced ShowTypingMiddleware with single-shot typing indicator
   - Eliminates race condition where typing could appear after message delivery
+- Added typing indicator before webhook call for proper UX during long waits
+  - Users now see typing indicator while waiting for N8N webhook response
+
+### Changed
+- Added ↗️ icon to "Manage your Integrations" link indicating external platform link
 
 ### Added
 - Thinking message with "Manage your Integrations" link sent before webhook call

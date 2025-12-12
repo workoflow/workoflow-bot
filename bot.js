@@ -464,7 +464,7 @@ class EchoBot extends ActivityHandler {
                             const magicLink = result.magicLink;
 
                             // Create the hyperlink text
-                            magicLinkText = `\n\n[Manage your Integrations](${magicLink})`;
+                            magicLinkText = `\n\n[↗️ Manage your Integrations](${magicLink})`;
                             console.log('[Magic Link] Successfully generated magic link for user:', userName);
 
                             if (result.channel) {
@@ -689,6 +689,12 @@ class EchoBot extends ActivityHandler {
                     const randomPhrase = thinkingPhrases[Math.floor(Math.random() * thinkingPhrases.length)];
                     const thinkingMessage = `${randomPhrase}${magicLinkText}`;
                     await sendMessage(context, MessageFactory.text(thinkingMessage, thinkingMessage));
+                }
+
+                // Send typing indicator before webhook call (the slow part)
+                // This ensures users see the bot is "working" while waiting for the response
+                if (process.env.LOAD_TEST_MODE !== 'true') {
+                    context.sendActivity({ type: 'typing' }).catch(() => {});
                 }
 
                 const n8nResponse = await axios.post(N8N_WEBHOOK_URL, enrichedPayload, config);
