@@ -261,69 +261,6 @@ class EchoBot extends ActivityHandler {
     constructor() {
         super();
 
-        // Loading messages for better user experience
-        this.loadingMessages = [
-            "🔍 Analyzing your request...",
-            "🔍 Processing your query...",
-            "🔍 Working on it...",
-            "🔍 Finding the best solution...",
-            "🔍 Generating response...",
-            "🔍 Almost there...",
-            "🔍 Preparing your answer...",
-            "🔍 Consulting the knowledge base...",
-            "🔍 Searching for information...",
-            "🔍 Gathering data..."
-        ];
-
-        // Tips array to showcase bot capabilities
-        this.tips = [
-            // Jira Integration Tips
-            "💡 Tip: Erkläre mir Jira-Tickets mit 'Erkläre mir bitte den Inhalt dieses Jira-Tickets: [Link]'",
-            "💡 Tip: Fasse Sprint-Ziele zusammen mit 'Fasse die Sprintziele des aktuellen Sprints kompakt zusammen [Sprint-Board-Link]'",
-            "💡 Tip: Erstelle Release Notes mit 'Beschreibe den aktuellen Jira-Sprint als Markdown-Datei [Sprint-Board-Link]'",
-            "💡 Tip: Teste Jira-Tickets besser mit 'Wie kann ich das folgende Jira-Ticket am besten testen? [Ticket-Link]'",
-            "💡 Tip: Bewerte Ticket-Qualität mit 'Bewerte die Qualität auf einer Skala von 1 bis 10: [Ticket-Link]'",
-            "💡 Tip: Zeige Projekthistorie mit 'Zeige mir die Projekthistorie auf Basis der wichtigsten Jira-Tickets [Sprint-Board-Link]'",
-            "💡 Tip: Fasse Kommentare zusammen mit 'Fasse die letzten 5 Kommentare aus folgendem Jira-Ticket zusammen [Ticket-Link]'",
-            "💡 Tip: Kommentiere Jira-Tickets mit 'Füge einen Kommentar zu [Ticket-Link] hinzu: [Dein Text]'",
-            
-            // Employee & Skills Search Tips
-            "💡 Tip: Finde Experten mit 'Nenne mir einen erfahrenen [Rolle] mit Projekterfahrung im [Technologie]-Umfeld'",
-            "💡 Tip: Suche Teammitglieder mit 'Wer aus unserem Team hat Erfahrung im Bereich [Skill] und ist als [Rolle] tätig?'",
-            "💡 Tip: Finde Ansprechpartner mit 'Wer kann unseren Kunden [Service] beraten und welche Kosten wären damit verbunden?'",
-            "💡 Tip: Prüfe Mitarbeiter-Skills mit 'Hat [Mitarbeiter] [Technologie]-Projekte betreut? In welchen Rollen?'",
-            "💡 Tip: Kontaktiere Kollegen mit 'Wie kann ich [Mitarbeiter] erreichen?'",
-            "💡 Tip: Finde passende Aufgaben mit 'Welche Tickets lassen sich am besten von [Mitarbeiter] bearbeiten? [Board-Link]'",
-            
-            // Document Generation Tips
-            "💡 Tip: Erstelle PDFs mit 'Packe diese [Informationen] in eine PDF'",
-            "💡 Tip: Generiere PowerPoints mit 'Erstelle eine Kurzvorstellung von [Mitarbeiter] als PowerPoint-Slide'",
-            "💡 Tip: Erstelle Top-Listen mit 'Erstelle anhand [URL] eine Liste der Top 10 [Thema] als PDF-File'",
-            "💡 Tip: Fasse Dokumente zusammen mit 'Fasse mir die Kernaussagen dieser Datei in 3 Sätze zusammen [pdf-file]'",
-            "💡 Tip: Erstelle Projektübergaben mit 'Erstelle eine Projektübergabe-Zusammenfassung basierend auf [Jira-Board-Link]'",
-            
-            // Web Research Tips
-            "💡 Tip: Recherchiere Unternehmen mit 'Recherchiere Informationen über das Unternehmen [Firma]'",
-            "💡 Tip: Extrahiere CSS-Farben mit 'Gib mir die CSS-Farbcodes der Webseite [URL]'",
-            "💡 Tip: Suche im Internet mit 'Bitte suche im Internet nach [Thema]'",
-            "💡 Tip: Analysiere Webseiten mit 'Generiere mir einen ausführlichen Aufsatz über [URL] als PDF'",
-            "💡 Tip: Prüfe Technologie-Support mit 'Welche Filetypes werden von [Technologie] supported? [web-page]'",
-            
-            // Project Management Tips
-            "💡 Tip: Finde Case Studies mit 'Gibt es eine Case Study zum Thema [Service]? Wer ist der Ansprechpartner?'",
-            "💡 Tip: Erstelle Urlaubsvertretungen mit 'Erstelle eine Übersicht für Urlaubsvertretung mit [Jira-Board] und [Confluence-Link]'",
-            "💡 Tip: Schätze Aufwände mit 'Wie lange würde ein erfahrener Entwickler für [Ticket-Link] brauchen?'",
-            "💡 Tip: Finde Kunden mit 'Welche Kunden haben wir in der [Branche]?'",
-            "💡 Tip: Plane Events mit 'Welche valantic Events stehen demnächst an?'",
-            
-            // General Bot Capabilities
-            "💡 Tip: Frage nach meinen Fähigkeiten mit 'Was kannst du eigentlich?'",
-            "💡 Tip: Melde Fehler mit 'Ich möchte einen Fehler melden: [Bug-Beschreibung]'",
-            "💡 Tip: Erstelle SEO-Analysen mit 'Erstelle Suchbegriffe zum Thema [Thema] und zeige wo [Firma] gut abschneidet'",
-            "💡 Tip: Finde Projekthistorie mit 'In welchen Projekten war [Mitarbeiter] bislang tätig?'",
-            "💡 Tip: Identifiziere Tätigkeitsfelder mit 'Nenne mir 10 Tätigkeitsfelder die [Mitarbeiter] bearbeiten kann'"
-        ];
-
         this.onMessage(async (context, next) => {
             try {
                 // Set fallback values at the highest level for Bot Framework Emulator compatibility
@@ -449,9 +386,6 @@ class EchoBot extends ActivityHandler {
                     console.log(JSON.stringify(context.activity.value, null, 2));
                 }
 
-                // Select a random loading message
-                const randomLoadingMessage = this.loadingMessages[Math.floor(Math.random() * this.loadingMessages.length)];
-
                 // Check if this is a personal (1:1) conversation
                 // Fetch extended user information early (needed for both magic link and custom data)
                 console.log('[ENRICHMENT] Fetching extended user information...');
@@ -469,12 +403,8 @@ class EchoBot extends ActivityHandler {
 
                 // Initialize optional message components (only for personal chats)
                 let magicLinkText = '';
-                let randomTip = '';
 
                 if (isPersonalChat) {
-                    // Select a random tip (only for personal chats)
-                    randomTip = this.tips[Math.floor(Math.random() * this.tips.length)];
-
                     // Generate magic link for the user using the new API approach
                     try {
                         // Use the values from context.activity which now have fallbacks set at the top
@@ -544,26 +474,13 @@ class EchoBot extends ActivityHandler {
                         magicLinkText = '';
                     }
                 } else {
-                    console.log('[Magic Link] Skipping magic link and tip for non-personal conversation');
+                    console.log('[Magic Link] Skipping magic link for non-personal conversation');
                     console.log('[Magic Link] Conversation details:', {
                         conversationType: conversationType,
                         isGroup: isGroup,
                         conversationId: context.activity.conversation.id,
                         isPersonalChat: isPersonalChat
                     });
-                }
-
-                // Create the loading message conditionally based on conversation type
-                const loadingMessage = isPersonalChat
-                    ? `${randomLoadingMessage}\n\n_${randomTip}_`
-                    : randomLoadingMessage;
-
-                await sendMessage(context, MessageFactory.text(loadingMessage, loadingMessage));
-
-                // Force typing indicator to re-appear after loading message
-                // (Teams hides typing when a message is received)
-                if (process.env.LOAD_TEST_MODE !== 'true') {
-                    await context.sendActivity({ type: 'typing' });
                 }
 
                 const config = {};

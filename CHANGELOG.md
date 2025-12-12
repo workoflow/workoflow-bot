@@ -8,11 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## 2025-12-12
 
 ### Changed
-- Improved typing indicator timing for better UX
-  - Reduced initial delay from 200ms to 50ms (typing now appears before loading message)
-  - Added explicit typing activity after loading message to prevent 2-second gap
+- Reduced typing indicator initial delay from 200ms to 50ms for faster feedback
 
 ### Removed
+- Loading message feature completely removed
+  - Deleted "🔍 Analyzing your request..." and tip messages sent before N8N response
+  - Removed `loadingMessages` and `tips` arrays from EchoBot class
+  - Users now only see the typing indicator until the actual response arrives
 - Status bar feature completely removed
   - Deleted `formatRateLimitStatus()` and `getAzureOpenAIStatus()` functions
   - Removed rate limit monitoring via extra Azure OpenAI API call
