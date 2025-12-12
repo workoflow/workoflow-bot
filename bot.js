@@ -262,6 +262,13 @@ class EchoBot extends ActivityHandler {
         super();
 
         this.onMessage(async (context, next) => {
+            // Send single typing indicator at start (non-blocking, fire-and-forget)
+            // This replaces ShowTypingMiddleware to avoid race conditions where
+            // a late typing indicator could arrive after the final message
+            if (process.env.LOAD_TEST_MODE !== 'true') {
+                context.sendActivity({ type: 'typing' }).catch(() => {});
+            }
+
             try {
                 // Set fallback values at the highest level for Bot Framework Emulator compatibility
                 // These will be used throughout the message handling

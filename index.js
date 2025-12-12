@@ -16,8 +16,7 @@ initializePhoenix();
 const {
     CloudAdapter,
     ConfigurationServiceClientCredentialFactory,
-    createBotFrameworkAuthenticationFromConfiguration,
-    ShowTypingMiddleware
+    createBotFrameworkAuthenticationFromConfiguration
 } = require('botbuilder');
 
 // This bot's main dialog.
@@ -108,10 +107,6 @@ const onTurnErrorHandler = async (context, error) => {
 
 // Set the onTurnError for the singleton CloudAdapter.
 adapter.onTurnError = onTurnErrorHandler;
-
-// Add typing indicator middleware - shows typing within 50ms, then every 2 seconds
-// Reduced from 200ms to ensure typing appears before loading message is sent
-adapter.use(new ShowTypingMiddleware(50, 2000));
 
 // Create the main dialog.
 const myBot = new EchoBot();

@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 2025-12-12
 
+### Fixed
+- Fixed typing indicator persisting after bot response in Teams
+  - Replaced ShowTypingMiddleware with single-shot typing indicator
+  - Eliminates race condition where typing could appear after message delivery
+
 ### Changed
 - Reduced typing indicator initial delay from 200ms to 50ms for faster feedback
 
